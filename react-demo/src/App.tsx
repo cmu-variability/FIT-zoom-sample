@@ -207,6 +207,7 @@ function App(props: AppProps) {
       message.warn('You have left the session.');
     }
   }, [zmClient, status, topic, signature, name, password]);
+  
   useEffect(() => {
     zmClient.on('connection-change', onConnectionChange);
     zmClient.on('media-sdk-change', onMediaSDKChange);
