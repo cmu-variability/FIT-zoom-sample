@@ -1,35 +1,59 @@
 /* eslint-disable no-restricted-globals */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import { Card, Button } from 'antd';
 import { IconFont } from '../../component/icon-font';
-import './home.scss';
+import './new-home.scss';
+import { checkLoginCredentials, haveUserJoinRoom } from '../../firebaseConfig'; // adjust the import path as needed
+import { useAuth } from '../../authContext'; // Adjust the path as per your directory structure
+
 
 const { Meta } = Card;
 interface HomeProps extends RouteComponentProps {
   status: string;
   onLeaveOrJoinSession: () => void;
+  createVideoToken: (topic: string, isResearcher: boolean) => any;
+
 }
 const Home: React.FunctionComponent<HomeProps> = (props) => {
-  const { history, status, onLeaveOrJoinSession } = props;
+  const { history, status, onLeaveOrJoinSession, createVideoToken } = props;
 
-  const [loggingIn, setLoggingIn] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSuccessfulLogin = () => {
-    setLoggingIn(false);
-    setLoggedIn(true);
-    console.log("you have logged in");
-    if (!status) {
-      onLeaveOrJoinSession();
-    }
+  const authContext = useAuth();
+  if (!authContext) {
+    // Handle the case where auth context is null. For example:
+    return null; // or some other appropriate handling
   }
+  const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher } = authContext;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const result = await checkLoginCredentials(username, password);
+    if (result.valid) {
+      console.log('Login successful. Group:', result.group);
+      setUserGroup(result.group)
+      setLoggedInUsername(username);
+      setIsResearcher(result.researcher)
+      if (!status) {
+        onLeaveOrJoinSession();
+      }
+      history.push('/new-home'); // Replace '/pre-room' with the path of your route
+    } else {
+      console.log('Invalid username or password');
+      // Handle invalid login, maybe show an error message
+    }
+  };
 
   const onCardClick = (type: string) => {
-      history.push(`/${type}${location.search}`);
+      createVideoToken(userGroup, false).then(() => {
+        history.push(`/video`);
+        console.log(username, userGroup);
+        haveUserJoinRoom(loggedInUsername, userGroup);
+      })
   };
+
   const featureList = [
     {
       key: 'video',
@@ -70,16 +94,15 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   }
   return (
     <div>
-      {!loggedIn ? (
+      {!loggedInUsername ? (
           <div className="login-container">
             <div className="login-box">
               <div className="login-box-content">
                 <p className="login-title">Login</p>
                 <form onSubmit={(e) => {
                   e.preventDefault(); // Prevents the default form submission behavior
-                  console.log("hello")
-                  handleSuccessfulLogin();
-                }}>                  
+                  handleSubmit(e);
+                }}>                
                   <input
                     type="text"
                     id="username"
@@ -122,7 +145,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
                     style={{ width: 320 }}
                     className="entry-item"
                     key={key}
-                    onClick={() => onCardClick(key)}
+                    onClick={() => onCardClick(userGroup)}
                   >
                     <Meta title={title} description={description} />
                   </Card>
