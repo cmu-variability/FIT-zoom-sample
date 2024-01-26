@@ -37,6 +37,9 @@ import { RouteComponentProps } from 'react-router-dom';
 import { updateUserGroup, haveUserLeaveRoom, fetchNextUserGroup, uploadVideo, storeVideoReference, createVideoReference, markCriticalMoment } from '../../../firebaseConfig';
 import { useAuth } from '../../../authContext'; // Adjust the path as per your directory structure
 import moment from 'moment-timezone';
+import { useModal } from '../../../ModalContext';
+import ChatModal from '../../../ChatModal';
+
 
 interface VideoFooterProps extends RouteComponentProps {
   className?: string;
@@ -98,6 +101,13 @@ const VideoFooter = (props: VideoFooterProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+
+  const { modalStates, setModalState } = useModal();
+
+  const handleChatButtonClick = () => {
+    setModalState('chatModal', !modalStates.chatModal);
+  };
+
 
   const onCameraClick = useCallback(async () => {
     if (isStartedVideo) {
@@ -440,9 +450,6 @@ const VideoFooter = (props: VideoFooterProps) => {
     }
   }
 
-
-
-
     const onVideoCaptureChange = useCallback((payload) => {
       if (payload.state === VideoCapturingState.Started) {
         setIsStartedVideo(true);
@@ -521,6 +528,8 @@ const VideoFooter = (props: VideoFooterProps) => {
       message.error('Start live streaming timeout');
     }
   }, []);
+
+
   useEffect(() => {
     zmClient.on('current-audio-change', onHostAudioMuted);
     zmClient.on('passively-stop-share', onPassivelyStopShare);
@@ -685,6 +694,9 @@ const VideoFooter = (props: VideoFooterProps) => {
         Mark Critical Moment
       </button>
 
+      <button onClick={handleChatButtonClick}>Toggle Chat Modal</button>
+      <ChatModal />
+      
       {liveTranscriptionClient?.getLiveTranscriptionStatus().isLiveTranscriptionEnabled && (
         <>
           <LiveTranscriptionButton

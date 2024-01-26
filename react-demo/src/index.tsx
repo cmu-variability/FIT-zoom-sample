@@ -9,6 +9,9 @@ import ZoomContext from './context/zoom-context';
 import { devConfig } from './config/dev';
 import { b64DecodeUnicode, generateVideoToken } from './utils/util';
 import { AuthProvider } from './authContext';
+import { ModalProvider } from './ModalContext';
+import ChatModal from './ChatModal';
+
 
 
 let meetingArgs: any = Object.fromEntries(new URLSearchParams(location.search));
@@ -117,13 +120,18 @@ if (meetingArgs?.telemetry_tracking_id) {
 const zmClient = ZoomVideo.createClient();
 
 ReactDOM.render(
+
+    
   <React.StrictMode>
-    <AuthProvider initialState={{ username: null, group: 'propFromIndex'}}>
-    <ZoomContext.Provider value={zmClient}>
-      <App meetingArgs={meetingArgs as any} />
-    </ZoomContext.Provider>
-    </AuthProvider>
+    <ModalProvider>
+      <AuthProvider initialState={{ username: null, group: 'propFromIndex'}}>
+      <ZoomContext.Provider value={zmClient}>
+        <App meetingArgs={meetingArgs as any} />
+      </ZoomContext.Provider>
+      </AuthProvider>
+    </ModalProvider>
   </React.StrictMode>,
+  
   document.getElementById('root')
 );
 
