@@ -43,6 +43,11 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     }
   }, [setLoggedInUsername, history]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('loggedInUsername');
+    setLoggedInUsername(null);
+    history.push('/r');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,6 +148,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
         <div>
           <div className="nav">
             <p>you are logged in as {loggedInUsername}</p>
+            <button onClick={handleLogout} className="logout-button">Logout</button>
           </div>
           <div className="home">
             <h1>Zoom Video SDK feature</h1>

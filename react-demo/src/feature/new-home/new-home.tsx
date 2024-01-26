@@ -38,6 +38,12 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     }
   }, [setLoggedInUsername, history]);
 
+  const handleLogout = () => {
+    localStorage.removeItem('loggedInUsername');
+    setLoggedInUsername(null);
+    history.push('/');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await checkLoginCredentials(username, password);
@@ -144,6 +150,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
         <div>
           <div className="nav">
             <p>you are logged in as {loggedInUsername}</p>
+            <button onClick={handleLogout} className="logout-button">Logout</button>
           </div>
           <div className="home">
             <h1>FIT Project Prototype</h1>
