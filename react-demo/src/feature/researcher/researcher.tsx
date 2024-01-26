@@ -33,6 +33,16 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   }
   const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher } = authContext;
 
+  useEffect(() => {
+    // Check if user is already logged in
+    const storedUsername = localStorage.getItem('loggedInUsername');
+    if (storedUsername) {
+      setLoggedInUsername(storedUsername);
+      // Redirect to home page or dashboard as needed
+      history.push('/r');
+    }
+  }, [setLoggedInUsername, history]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +142,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
       ) : (
         <div>
           <div className="nav">
-            <p>you are logged in</p>
+            <p>you are logged in as {loggedInUsername}</p>
           </div>
           <div className="home">
             <h1>Zoom Video SDK feature</h1>

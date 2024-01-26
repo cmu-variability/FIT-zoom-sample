@@ -23,10 +23,20 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
 
   const authContext = useAuth();
   if (!authContext) {
-    // Handle the case where auth context is null. For example:
     return null; // or some other appropriate handling
   }
   const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher } = authContext;
+
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const storedUsername = localStorage.getItem('loggedInUsername');
+    if (storedUsername) {
+      setLoggedInUsername(storedUsername);
+      // Redirect to home page or dashboard as needed
+      history.push('/new-home');
+    }
+  }, [setLoggedInUsername, history]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,34 +68,36 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     {
       key: 'video',
       icon: 'icon-meeting',
-      title: 'Audio, video and share',
-      description: 'Gallery Layout, Start/Stop Audio, Mute/Unmute, Start/Stop Video, Start/Stop Screen Share'
+      title: 'Join Meeting',
+      description: 'Join the meeting and eventually your researcher will join you'
     },
-    {
-      key: 'chat',
-      icon: 'icon-chat',
-      title: 'Session chat',
-      description: 'Session Chat, Chat Priviledge'
-    },
-    {
-      key: 'command',
-      icon: 'icon-chat',
-      title: 'Command Channel chat',
-      description: 'Session Command Channel chat'
-    },
-    {
-      key: 'subsession',
-      icon: 'icon-group',
-      title: 'Subsession',
-      description: 'Open/Close Subsession, Assign/Move Participants into Subsession, Join/Leave Subsession'
-    },
-    {
-      key: 'preview',
-      icon: 'icon-meeting',
-      title: 'Local Preview',
-      description: 'Audio and Video preview'
-    }
-  ];
+  ]
+  //   {
+  //     key: 'chat',
+  //     icon: 'icon-chat',
+  //     title: 'Session chat',
+  //     description: 'Session Chat, Chat Priviledge'
+  //   },
+  //   {
+  //     key: 'command',
+  //     icon: 'icon-chat',
+  //     title: 'Command Channel chat',
+  //     description: 'Session Command Channel chat'
+  //   },
+  //   {
+  //     key: 'subsession',
+  //     icon: 'icon-group',
+  //     title: 'Subsession',
+  //     description: 'Open/Close Subsession, Assign/Move Participants into Subsession, Join/Leave Subsession'
+  //   },
+  //   {
+  //     key: 'preview',
+  //     icon: 'icon-meeting',
+  //     title: 'Local Preview',
+  //     description: 'Audio and Video preview'
+  //   }
+  // ];
+
   let actionText;
   if (status === 'connected') {
     actionText = 'Leave';
@@ -131,10 +143,10 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
       ) : (
         <div>
           <div className="nav">
-            <p>you are logged in</p>
+            <p>you are logged in as {loggedInUsername}</p>
           </div>
           <div className="home">
-            <h1>Zoom Video SDK feature</h1>
+            <h1>FIT Project Prototype</h1>
             <div className="feature-entry">
               {featureList.map((feature) => {
                 const { key, icon, title, description } = feature;
