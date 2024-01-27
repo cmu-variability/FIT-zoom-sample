@@ -36,17 +36,28 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   useEffect(() => {
     // Check if user is already logged in
     const storedUsername = localStorage.getItem('loggedInUsername');
+    const storedIsResearcher = localStorage.getItem('isResearcher');
+    console.log("stored values: ", storedUsername, storedIsResearcher);
+    const isResearcherBool = storedIsResearcher === 'true';
+
     if (storedUsername) {
       setLoggedInUsername(storedUsername);
       // Redirect to home page or dashboard as needed
-      history.push('/r');
+      console.log("what is going on here: ", storedIsResearcher, !storedIsResearcher)
+      if (!isResearcherBool) {
+        history.push('/new-home')
+      } else {
+        history.push('/r');
+      }
     }
   }, [setLoggedInUsername, history]);
 
   const handleLogout = () => {
     localStorage.removeItem('loggedInUsername');
     setLoggedInUsername(null);
-    history.push('/r');
+    setUserGroup("");
+    setIsResearcher(false);
+    history.push('/');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -41,6 +41,8 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   const handleLogout = () => {
     localStorage.removeItem('loggedInUsername');
     setLoggedInUsername(null);
+    setUserGroup("");
+    setIsResearcher(false);
     history.push('/');
   };
 
