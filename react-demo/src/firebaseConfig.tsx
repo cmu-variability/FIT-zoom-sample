@@ -116,7 +116,6 @@ export const fetchCurrentMeetings = async (): Promise<FetchCurrentMeetingsRespon
   }
 };
 
-
 export const haveUserLeaveRoom = async (username: string | null, group: string) => {
   try {
       // Reference to the specific group document
