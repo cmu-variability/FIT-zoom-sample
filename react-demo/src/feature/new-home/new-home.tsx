@@ -151,7 +151,8 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
       ) : (
         <div>
           <div className="nav">
-            <p>you are logged in as {loggedInUsername}</p>
+            <div style={{ flex: 1 }}></div>
+            <p style={{ marginRight: '20px', fontSize: '24px' }}>You are logged in as {loggedInUsername}</p>
             <button onClick={handleLogout} className="logout-button">Logout</button>
           </div>
           <div className="home">
