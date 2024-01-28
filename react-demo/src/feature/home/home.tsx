@@ -62,6 +62,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
       description: 'Audio and Video preview'
     }
   ];
+  
   let actionText;
   if (status === 'connected') {
     actionText = 'Leave';

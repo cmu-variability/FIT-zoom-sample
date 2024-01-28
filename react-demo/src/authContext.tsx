@@ -23,10 +23,30 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children, initialState }) => {
-  const [loggedInUsername, setLoggedInUsername] = useState<string | null>(initialState?.username || null);
-  const [userGroup, setUserGroup] = useState<string>(initialState?.group || 'dev');
-  const [isResearcher, setIsResearcher] = useState<boolean>(false);
-  const [researcher, setResearcher] = useState<string>(initialState?.researcher || 'r');
+  const [loggedInUsername, setLoggedInUsernameState] = useState<string | null>(initialState?.username || null);
+  const [userGroup, setUserGroupState] = useState<string>(initialState?.group || 'dev');
+  const [isResearcher, setIsResearcherState] = useState<boolean>(false);
+  const [researcher, setResearcherState] = useState<string>(initialState?.researcher || 'r');
+
+  const setLoggedInUsername = (username: string | null) => {
+    localStorage.setItem('loggedInUsername', username || '');
+    setLoggedInUsernameState(username);
+  };
+
+  const setUserGroup = (group: string) => {
+    localStorage.setItem('userGroup', group);
+    setUserGroupState(group);
+  };
+
+  const setIsResearcher = (isResearcher: boolean) => {
+    localStorage.setItem('isResearcher', String(isResearcher));
+    setIsResearcherState(isResearcher);
+  };
+
+  const setResearcher = (researcher: string) => {
+    localStorage.setItem('researcher', researcher);
+    setResearcherState(researcher);
+  };
 
   return (
     <AuthContext.Provider value={{ loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher, researcher, setResearcher }}>
