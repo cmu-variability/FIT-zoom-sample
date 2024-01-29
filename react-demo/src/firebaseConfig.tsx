@@ -5,7 +5,6 @@ import { getFirestore, doc, setDoc, collection, getDocs, getDoc, updateDoc, arra
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import moment from 'moment-timezone';
 
-// otherFile.js
 import firebaseConfig from './firebaseSecret';
 
 // Initialize Firebase
