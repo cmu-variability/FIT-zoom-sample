@@ -6,7 +6,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import moment from 'moment-timezone';
 
 // otherFile.js
-import firebaseConfig from './firebaseConfig';
+import firebaseConfig from './firebaseSecret';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
