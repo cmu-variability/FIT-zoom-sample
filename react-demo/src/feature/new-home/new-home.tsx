@@ -50,7 +50,6 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     e.preventDefault();
     const result = await checkLoginCredentials(username, password);
     if (result.valid) {
-      console.log('Login successful. Group:', result.group);
       setUserGroup(result.group)
       setLoggedInUsername(username);
       setIsResearcher(result.researcher)

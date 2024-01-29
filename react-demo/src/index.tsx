@@ -124,7 +124,7 @@ ReactDOM.render(
     
   <React.StrictMode>
     <ModalProvider>
-      <AuthProvider initialState={{ username: null, group: 'propFromIndex'}}>
+      <AuthProvider initialState={{ username: null, group: null}}>
       <ZoomContext.Provider value={zmClient}>
         <App meetingArgs={meetingArgs as any} />
       </ZoomContext.Provider>

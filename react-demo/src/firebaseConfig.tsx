@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, collection, getDocs, getDoc, updateDoc, arrayRemove, arrayUnion } from "firebase/firestore";
+import { getFirestore, doc, setDoc, collection, getDocs, getDoc, updateDoc, arrayRemove, arrayUnion, addDoc, query, onSnapshot, orderBy } from "firebase/firestore";
 
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import moment from 'moment-timezone';
@@ -303,4 +303,38 @@ export const fetchCriticalMoments = async (username: string | null, videoIndex: 
     console.error('Error fetching critical moments:', error);
     return [];
   }
+};
+
+
+export const addChatMessage = async (userGroup: string, message: string, username: string) => {
+  const meetingDocRef = doc(firestore, `currentMeetings/${userGroup}`);
+  try {
+    // Update the 'chats' array in the document
+    await updateDoc(meetingDocRef, {
+      chats: arrayUnion({
+        text: message,
+        user: username,
+        timestamp: new Date().toISOString(),
+        isSent: true,
+      }),
+    });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+};
+
+
+// Function to fetch chat messages from an array in a Firestore document
+export const onChatMessagesSnapshot = (userGroup: string, callback: Function) => {
+  const meetingDocRef = doc(firestore, `currentMeetings/${userGroup}`);
+  return onSnapshot(meetingDocRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      const messages = data.chats || [];
+      callback(messages);
+    } else {
+      console.log('No chat document found for the user group:', userGroup);
+    }
+  });
 };
