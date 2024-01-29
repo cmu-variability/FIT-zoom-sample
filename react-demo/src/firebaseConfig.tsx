@@ -5,16 +5,8 @@ import { getFirestore, doc, setDoc, collection, getDocs, getDoc, updateDoc, arra
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import moment from 'moment-timezone';
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyBw-Xyyr4Zp_QPATN-ONnxx73c0zVzboZM",
-    authDomain: "fit-react-6fefb.firebaseapp.com",
-    projectId: "fit-react-6fefb",
-    storageBucket: "fit-react-6fefb.appspot.com",
-    messagingSenderId: "547256975599",
-    appId: "1:547256975599:web:3fac54a43a5a666bf19b1a",
-    measurementId: "G-N80PSJQDCX"
-};
+// otherFile.js
+import firebaseConfig from './firebaseSecret';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
