@@ -6,7 +6,7 @@ import { IconFont } from '../../component/icon-font';
 import './new-home.scss';
 import { checkLoginCredentials, haveUserJoinRoom } from '../../firebaseConfig'; // adjust the import path as needed
 import { useAuth } from '../../authContext'; // Adjust the path as per your directory structure
-
+import Webcam from 'react-webcam';
 
 const { Meta } = Card;
 interface HomeProps extends RouteComponentProps {
@@ -63,7 +63,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     }
   };
 
-  const onCardClick = (type: string) => {
+  const onWebcamClick = (type: string) => {
       createVideoToken(userGroup, false).then(() => {
         history.push(`/video`);
         console.log(username, userGroup);
@@ -71,14 +71,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
       })
   };
 
-  const featureList = [
-    {
-      key: 'video',
-      icon: 'icon-meeting',
-      title: 'Join Meeting',
-      description: 'Join the meeting and eventually your researcher will join you'
-    },
-  ]
+  const webcamRef = React.useRef(null);
 
   let actionText;
   if (status === 'connected') {
@@ -138,25 +131,12 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
               Logout
             </button>
           </div>
-          <div className="home">
-            <h1>FIT Project Prototype</h1>
-            <div className="feature-entry">
-              {featureList.map((feature) => {
-                const { key, icon, title, description } = feature;
-                return (
-                  <Card
-                    cover={<IconFont style={{ fontSize: '72px' }} type={icon} />}
-                    hoverable
-                    style={{ width: 320 }}
-                    className="entry-item"
-                    key={key}
-                    onClick={() => onCardClick(userGroup)}
-                  >
-                    <Meta title={title} description={description} />
-                  </Card>
-                );
-              })}
-            </div>
+          <div className="video">
+          <h1>FIT Project Prototype</h1>
+            <Webcam audio={false} ref={webcamRef} />
+            <button onClick={() => onWebcamClick(userGroup)}>
+              Join Room
+            </button>
           </div>
         </div>
       )}
