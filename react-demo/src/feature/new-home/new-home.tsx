@@ -79,31 +79,6 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
       description: 'Join the meeting and eventually your researcher will join you'
     },
   ]
-  //   {
-  //     key: 'chat',
-  //     icon: 'icon-chat',
-  //     title: 'Session chat',
-  //     description: 'Session Chat, Chat Priviledge'
-  //   },
-  //   {
-  //     key: 'command',
-  //     icon: 'icon-chat',
-  //     title: 'Command Channel chat',
-  //     description: 'Session Command Channel chat'
-  //   },
-  //   {
-  //     key: 'subsession',
-  //     icon: 'icon-group',
-  //     title: 'Subsession',
-  //     description: 'Open/Close Subsession, Assign/Move Participants into Subsession, Join/Leave Subsession'
-  //   },
-  //   {
-  //     key: 'preview',
-  //     icon: 'icon-meeting',
-  //     title: 'Local Preview',
-  //     description: 'Audio and Video preview'
-  //   }
-  // ];
 
   let actionText;
   if (status === 'connected') {
@@ -151,8 +126,17 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
         <div>
           <div className="nav">
             <div style={{ flex: 1 }}></div>
-            <p style={{ marginRight: '20px', fontSize: '24px' }}>You are logged in as {loggedInUsername}</p>
-            <button onClick={handleLogout} className="logout-button">Logout</button>
+            <p style={{ marginRight: '20px', fontSize: '18px' }}>You are logged in as {loggedInUsername}</p>
+
+            {isResearcher && (
+              <button style={{ marginRight: '20px' }} onClick={() => history.push('/r')} className="researcher-button">
+                Researcher Page
+              </button>
+            )}
+
+            <button style={{ marginRight: '20px' }} onClick={handleLogout} className="logout-button">
+              Logout
+            </button>
           </div>
           <div className="home">
             <h1>FIT Project Prototype</h1>

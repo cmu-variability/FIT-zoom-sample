@@ -158,8 +158,18 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
       ) : (
         <div>
           <div className="nav">
-            <p>you are logged in as {loggedInUsername}</p>
-            <button onClick={handleLogout} className="logout-button">Logout</button>
+            <div style={{ flex: 1 }}></div>
+            <p style={{ marginRight: '20px', fontSize: '18px' }}>You are logged in as {loggedInUsername}</p>
+
+            {isResearcher && (
+              <button style={{ marginRight: '20px' }} onClick={() => history.push('/r')} className="researcher-button">
+                Researcher Page
+              </button>
+            )}
+
+            <button style={{ marginRight: '20px' }} onClick={handleLogout} className="logout-button">
+              Logout
+            </button>
           </div>
           <div className="home">
             <h1>Zoom Video SDK feature</h1>
