@@ -6,8 +6,7 @@ import { IconFont } from '../../component/icon-font';
 import './researcher.scss';
 import { checkLoginCredentials } from '../../firebaseConfig'; // adjust the import path as needed
 import { useAuth } from '../../authContext'; // Adjust the path as per your directory structure
-import { fetchCurrentMeetings, FetchCurrentMeetingsResponse, haveUserJoinRoom, fetchPathsAndTimes, VideoDetail } from '../../firebaseConfig';
-import { current } from 'immer';
+import { haveUserJoinRoom, fetchAllVideos, VideoData, fetchCurrentMeetings } from '../../firebaseConfig';
 
 
 const { Meta } = Card;
@@ -24,32 +23,32 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   const [password, setPassword] = useState("");
   const [currentMeetings, setCurrentMeetings] = useState<{ [key: string]: any }>([]); // Define state as an array of strings
 
-  const [videoDetails, setVideoDetails] = useState<VideoDetail[]>([]);
+  const [videoDetails, setVideoDetails] = useState<VideoData[]>([]);
 
   const authContext = useAuth();
   if (!authContext) {
     // Handle the case where auth context is null. For example:
     return null; // or some other appropriate handling
   }
-  const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher } = authContext;
+  const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher, researcher, setResearcher } = authContext;
+
 
   useEffect(() => {
     // Check if user is already logged in
     const storedUsername = localStorage.getItem('loggedInUsername');
-    const storedIsResearcher = localStorage.getItem('isResearcher');
-    console.log("stored values: ", storedUsername, storedIsResearcher);
-    const isResearcherBool = storedIsResearcher === 'true';
+    const storedUserGroup = localStorage.getItem('loggedInUserGroup');
+    const storedIsResearcher = localStorage.getItem('loggedInIsResearcher');
+    const storedResearcher = localStorage.getItem('loggedInResearcher')
 
-    if (storedUsername) {
-      setLoggedInUsername(storedUsername);
-      // Redirect to home page or dashboard as needed
-      console.log("what is going on here: ", storedIsResearcher, !storedIsResearcher)
-      if (!isResearcherBool) {
-        history.push('/new-home')
-      } else {
-        history.push('/r');
-      }
-    }
+    if (storedIsResearcher === "false") {
+      history.push('/home');
+    } 
+
+    setLoggedInUsername(storedUsername);
+    setUserGroup(storedUserGroup || "");
+    setIsResearcher(storedIsResearcher === "true");
+    setResearcher(storedResearcher || "");
+
   }, [setLoggedInUsername, history]);
 
   const handleLogout = () => {
@@ -61,64 +60,64 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('Login attempted');
     e.preventDefault();
     const result = await checkLoginCredentials(username, password);
+    console.log('Login successful. Group:', result);
+
     if (result.valid) {
-      console.log('Login successful. Group:', result.group);
       setUserGroup(result.group)
       setLoggedInUsername(username);
-      if (!status) {
-        onLeaveOrJoinSession();
+      setIsResearcher(result.isResearcher);
+      setResearcher('r');
+      if (result.isResearcher === 'false') {
+        history.push('/');
       }
+      // if (!status) {
+      //   onLeaveOrJoinSession();
+      // }
     } else {
       console.log('Invalid username or password');
       // Handle invalid login, maybe show an error message
     }
   };
 
-  const onCardClick = (topic: string) => {
-      createVideoToken(topic, true).then(() => {
-        history.push(`/video`);
-        haveUserJoinRoom(username, userGroup);
-      })
+  const onCardClick = async (id: string) => {
+    setUserGroup(id);
+    await createVideoToken(id, true);
+    history.push(`/video`);
+    haveUserJoinRoom(username, id); // Use `id` directly as `userGroup` state might not be updated yet
   };
 
-  const featureList = [
-    {
-      key: 'video',
-      icon: 'icon-meeting',
-      title: 'Audio, video and share',
-      description: 'Gallery Layout, Start/Stop Audio, Mute/Unmute, Start/Stop Video, Start/Stop Screen Share'
-    }
-  ];
-
-  let actionText;
-  if (status === 'connected') {
-    actionText = 'Leave';
-  } else if (status === 'closed') {
-    actionText = 'Join';
-  }
-
   useEffect(() => {
-    const fetchMeetings = async () => {
-      const response: FetchCurrentMeetingsResponse = await fetchCurrentMeetings();
+    const fetchVideos = async () => {
+      try {
+        const videos = await fetchAllVideos();
+        setVideoDetails(videos); // This now expects videos to be of type VideoData[]
+      } catch (error) {
+        console.error("Failed to fetch videos:", error);
+      }
+    };
+  
+    if (authContext?.loggedInUsername) {
+      fetchVideos();
+    }
+
+    const fetchAndSetCurrentMeetings = async () => {
+      const response = await fetchCurrentMeetings();
       if (response.success && response.meetings) {
+        // Assuming response.meetings is an array of meeting objects
         setCurrentMeetings(response.meetings);
       } else {
-        console.error(response.message || 'Failed to fetch current meetings');
+        console.error("Failed to fetch current meetings:", response.message);
       }
     };
 
     if (authContext?.loggedInUsername) {
-      fetchMeetings();
-      fetchPathsAndTimes(authContext.loggedInUsername).then(setVideoDetails);
-    }
-
-    if (loggedInUsername) {
+      fetchAndSetCurrentMeetings();
     }
   }, [authContext?.loggedInUsername]);
-
-
+  
   return (
     <div>
       {!loggedInUsername ? (
@@ -161,18 +160,16 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
             <div style={{ flex: 1 }}></div>
             <p style={{ marginRight: '20px', fontSize: '18px' }}>You are logged in as {loggedInUsername}</p>
 
-            {isResearcher && (
-              <button style={{ marginRight: '20px' }} onClick={() => history.push('/r')} className="researcher-button">
-                Researcher Page
-              </button>
-            )}
+            <button style={{ marginRight: '20px' }} onClick={() => history.push('/admin')} className="researcher-button">
+              Admin Page
+            </button>
 
             <button style={{ marginRight: '20px' }} onClick={handleLogout} className="logout-button">
               Logout
             </button>
           </div>
           <div className="home">
-            <h1>Zoom Video SDK feature</h1>
+            <h1>Available Rooms:</h1>
             <div className="feature-entry">
               {currentMeetings.map((meet: { [key: string]: any }) => {
                 const id = Object.keys(meet)[0];
@@ -194,22 +191,20 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
             </div>
           </div>
 
-        {loggedInUsername && (
-        <div className="video-details">
-          <h2>My Videos</h2>
-          <ul>
-            {videoDetails.map((video, index) => (
-              <li key={index}>
-                <a href={video.path} target="_blank">Path: {video.path}</a>
-                <br />
-                <span>Start Time: {new Date(video.startTime).toLocaleString("en-US", { timeZone: "America/New_York" })}</span>
-                <br />
-                <a href={('/r/' + video.index)}>View Video</a><br />
-              </li>
-            ))}
-          </ul>
-        </div>
-        )}
+          {loggedInUsername && (
+            <div className="video-details">
+              <h2>Recorded Videos</h2>
+              <div className="video-grid"> {/* Apply the grid container class here */}
+                {videoDetails.map((video, index) => (
+                  <div className="video-item" key={index}> {/* Apply the item class here */}
+                    <a href={video.videoURL} target="_blank">Firebase Video Link</a>
+                    <span>Start Time: {video.callStartTime}</span>
+                    <a href={('/r/' + video.videoStorageId)}>Watch Video</a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
       )}

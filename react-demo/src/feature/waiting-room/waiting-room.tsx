@@ -1,356 +1,153 @@
-import React, { useCallback, useState, useRef } from 'react';
-import ZoomVideo, { TestMicrophoneReturn, TestSpeakerReturn } from '@zoom/videosdk';
-import { useMount, useUnmount } from '../../hooks';
+/* eslint-disable no-restricted-globals */
+import React, { useState, useEffect } from 'react';
+import { RouteComponentProps } from 'react-router-dom';
+import { Card, Button } from 'antd';
+import { IconFont } from '../../component/icon-font';
 import './waiting-room.scss';
-import MicrophoneButton from '../video/components/microphone';
-import CameraButton from '../video/components/camera';
-import { message, Button, Progress, Select } from 'antd';
-import { MediaDevice } from '../video/video-types';
-import classNames from 'classnames';
+import { checkLoginCredentials, haveUserJoinRoom } from '../../firebaseConfig'; // adjust the import path as needed
+import { useAuth } from '../../authContext'; // Adjust the path as per your directory structure
+import Webcam from 'react-webcam';
 
-// label: string;
-// deviceId: string;
-let prevMicFeedbackStyle = '';
-let micFeedBackInteval: any = '';
+const { Meta } = Card;
+interface HomeProps extends RouteComponentProps {
+  status: string;
+  onLeaveOrJoinSession: () => void;
+  createVideoToken: (topic: string, isResearcher: boolean) => any;
 
-let localAudio = ZoomVideo.createLocalAudioTrack();
-let localVideo = ZoomVideo.createLocalVideoTrack();
-let allDevices;
+}
+const Home: React.FunctionComponent<HomeProps> = (props) => {
+  const { history, status, onLeaveOrJoinSession, createVideoToken } = props;
 
-const mountDevices: () => Promise<{
-  mics: MediaDevice[];
-  speakers: MediaDevice[];
-  cameras: MediaDevice[];
-}> = async () => {
-  allDevices = await ZoomVideo.getDevices();
-  const cameraDevices: Array<MediaDeviceInfo> = allDevices.filter((device) => {
-    return device.kind === 'videoinput';
-  });
-  const micDevices: Array<MediaDeviceInfo> = allDevices.filter((device) => {
-    return device.kind === 'audioinput';
-  });
-  const speakerDevices: Array<MediaDeviceInfo> = allDevices.filter((device) => {
-    return device.kind === 'audiooutput';
-  });
-  return {
-    mics: micDevices.map((item) => {
-      return { label: item.label, deviceId: item.deviceId };
-    }),
-    speakers: speakerDevices.map((item) => {
-      return { label: item.label, deviceId: item.deviceId };
-    }),
-    cameras: cameraDevices.map((item) => {
-      return { label: item.label, deviceId: item.deviceId };
-    })
-  };
-};
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-const updateMicFeedbackStyle = () => {
-  const newVolumeIntensity = localAudio.getCurrentVolume();
-  let newMicFeedbackStyle = '';
-
-  if (newVolumeIntensity === 0) {
-    newMicFeedbackStyle = '';
-  } else if (newVolumeIntensity <= 0.05) {
-    newMicFeedbackStyle = 'mic-feedback__very-low';
-  } else if (newVolumeIntensity <= 0.1) {
-    newMicFeedbackStyle = 'mic-feedback__low';
-  } else if (newVolumeIntensity <= 0.15) {
-    newMicFeedbackStyle = 'mic-feedback__medium';
-  } else if (newVolumeIntensity <= 0.2) {
-    newMicFeedbackStyle = 'mic-feedback__high';
-  } else if (newVolumeIntensity <= 0.25) {
-    newMicFeedbackStyle = 'mic-feedback__very-high';
-  } else {
-    newMicFeedbackStyle = 'mic-feedback__max';
+  const authContext = useAuth();
+  if (!authContext) {
+    return null; // or some other appropriate handling
   }
-  const micIcon: any = document.getElementById('auido-volume-feedback');
-  if (prevMicFeedbackStyle !== '' && micIcon) {
-    micIcon.classList.toggle(prevMicFeedbackStyle);
+  const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher, researcher, setResearcher } = authContext;
+
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const storedUsername = localStorage.getItem('loggedInUsername');
+    const storedUserGroup = localStorage.getItem('loggedInUserGroup');
+    const storedIsResearcher = localStorage.getItem('loggedInIsResearcher');
+    const storedResearcher = localStorage.getItem('loggedInResearcher')
+
+    if (storedUsername) {
+      setLoggedInUsername(storedUsername);
+      setUserGroup(storedUserGroup || "");
+      setIsResearcher(storedIsResearcher === "true");
+      setResearcher(storedResearcher || "");
+    }
+    
+  }, [setLoggedInUsername, history]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('loggedInUsername');
+    setLoggedInUsername(null);
+    setUserGroup("");
+    setIsResearcher(false);
+    setResearcher("");
+    history.push('/');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const result = await checkLoginCredentials(username, password);
+    if (result.valid) {
+      setUserGroup(result.group)
+      setLoggedInUsername(username);
+      setIsResearcher(result.researcher)
+      if (!status) {
+        onLeaveOrJoinSession();
+      }
+      history.push('/new-home'); // Replace '/pre-room' with the path of your route
+    } else {
+      console.log('Invalid username or password');
+      // Handle invalid login, maybe show an error message
+    }
+  };
+
+  const onWebcamClick = (type: string) => {
+      createVideoToken(userGroup, false).then(() => {
+        history.push(`/video`);
+        console.log(username, userGroup);
+        haveUserJoinRoom(loggedInUsername, userGroup);
+      })
+  };
+
+  const webcamRef = React.useRef(null);
+
+  let actionText;
+  if (status === 'connected') {
+    actionText = 'Leave';
+  } else if (status === 'closed') {
+    actionText = 'Join';
   }
-
-  if (newMicFeedbackStyle !== '' && micIcon) {
-    micIcon.classList.toggle(newMicFeedbackStyle);
-  }
-  console.log(newMicFeedbackStyle, newVolumeIntensity);
-  prevMicFeedbackStyle = newMicFeedbackStyle;
-};
-
-const { Option } = Select;
-
-const PreviewContainer = () => {
-  const [isStartedAudio, setIsStartedAudio] = useState<boolean>(false);
-  const [isMuted, setIsMuted] = useState<boolean>(true);
-  const [isStartedVideo, setIsStartedVideo] = useState<boolean>(false);
-  const [micList, setMicList] = useState<MediaDevice[]>([]);
-  const [speakerList, setSpeakerList] = useState<MediaDevice[]>([]);
-  const [cameraList, setCameraList] = useState<MediaDevice[]>([]);
-  const [activeMicrophone, setActiveMicrophone] = useState('');
-  const [activeSpeaker, setActiveSpeaker] = useState('');
-  const [activeCamera, setActiveCamera] = useState('');
-  const [outputLevel, setOutputLevel] = useState(0);
-  const [inputLevel, setInputLevel] = useState(0);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-  const [isPlayingRecording, setIsPlayingRecording] = useState(false);
-  const [isInVBMode, setIsInVBMode] = useState(false);
-  const [isBlur, setIsBlur] = useState(false);
-  const speakerTesterRef = useRef<TestSpeakerReturn>();
-  const microphoneTesterRef = useRef<TestMicrophoneReturn>();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  const onCameraClick = useCallback(async () => {
-    if (isStartedVideo) {
-      await localVideo?.stop();
-      setIsStartedVideo(false);
-      setIsInVBMode(false);
-      setIsBlur(false);
-    } else {
-      if (videoRef.current) {
-        await localVideo?.start(videoRef.current);
-        setIsStartedVideo(true);
-      }
-    }
-  }, [isStartedVideo]);
-  const onMicrophoneClick = useCallback(async () => {
-    if (isStartedAudio) {
-      if (isMuted) {
-        await localAudio?.unmute();
-        micFeedBackInteval = setInterval(updateMicFeedbackStyle, 500);
-        setIsMuted(false);
-      } else {
-        await localAudio?.mute();
-        if (micFeedBackInteval) {
-          clearInterval(micFeedBackInteval);
-        }
-        setIsMuted(true);
-      }
-    } else {
-      await localAudio?.start();
-      setIsStartedAudio(true);
-    }
-  }, [isStartedAudio, isMuted]);
-  const onMicrophoneMenuClick = async (key: string) => {
-    const [type, deviceId] = key.split('|');
-    if (type === 'microphone') {
-      if (deviceId !== activeMicrophone) {
-        await localAudio.stop();
-        setIsMuted(true);
-        localAudio = ZoomVideo.createLocalAudioTrack(deviceId);
-        await localAudio.start();
-        setActiveMicrophone(deviceId);
-      }
-    } else if (type === 'leave audio') {
-      await localAudio.stop();
-      setIsStartedAudio(false);
-    }
-  };
-  const onSwitchCamera = async (key: string) => {
-    if (localVideo) {
-      if (activeCamera !== key) {
-        await localVideo.switchCamera(key);
-      }
-    }
-  };
-  const onBlurBackground = useCallback(async () => {
-    if (isInVBMode) {
-      if (isBlur) {
-        await localVideo.updateVirtualBackground(undefined);
-      } else {
-        await localVideo.updateVirtualBackground('blur');
-      }
-      setIsBlur(!isBlur);
-    } else {
-      if (!isBlur) {
-        localVideo.stop();
-        if (canvasRef.current) {
-          localVideo.start(canvasRef.current, { imageUrl: 'blur' });
-        }
-        setIsInVBMode(true);
-        setIsBlur(!isBlur);
-      }
-    }
-  }, [isInVBMode, isBlur]);
-  useMount(() => {
-    mountDevices().then((devices) => {
-      setMicList(devices.mics);
-      setCameraList(devices.cameras);
-      setSpeakerList(devices.speakers);
-      if (devices.speakers.length > 0) {
-        setActiveSpeaker(devices.speakers[0].deviceId);
-      }
-      if (devices.mics.length > 0) {
-        setActiveMicrophone(devices.mics[0].deviceId);
-      }
-    });
-  });
-  const onTestSpeakerClick = () => {
-    if (microphoneTesterRef.current) {
-      microphoneTesterRef.current.destroy();
-      microphoneTesterRef.current = undefined;
-    }
-    if (isPlayingAudio) {
-      speakerTesterRef.current?.stop();
-      setIsPlayingAudio(false);
-      setOutputLevel(0);
-    } else {
-      speakerTesterRef.current = localAudio.testSpeaker({
-        speakerId: activeSpeaker,
-        onAnalyseFrequency: (value) => {
-          setOutputLevel(Math.min(100, value));
-        }
-      });
-      setIsPlayingAudio(true);
-    }
-  };
-  const onTestMicrophoneClick = () => {
-    if (speakerTesterRef.current) {
-      speakerTesterRef.current.destroy();
-      speakerTesterRef.current = undefined;
-    }
-    if (!isPlayingRecording && !isRecordingVoice) {
-      microphoneTesterRef.current = localAudio.testMicrophone({
-        microphoneId: activeMicrophone,
-        speakerId: activeSpeaker,
-        recordAndPlay: true,
-        onAnalyseFrequency: (value) => {
-          setInputLevel(Math.min(100, value));
-        },
-        onStartRecording: () => {
-          setIsRecordingVoice(true);
-        },
-        onStartPlayRecording: () => {
-          setIsRecordingVoice(false);
-          setIsPlayingRecording(true);
-        },
-        onStopPlayRecording: () => {
-          setIsPlayingRecording(false);
-        }
-      });
-    } else if (isRecordingVoice) {
-      microphoneTesterRef.current?.stopRecording();
-      setIsRecordingVoice(false);
-    } else if (isPlayingRecording) {
-      microphoneTesterRef.current?.stop();
-      setIsPlayingRecording(false);
-    }
-  };
-  let microphoneBtn = 'Test Microphone';
-  if (isRecordingVoice) {
-    microphoneBtn = 'Recording';
-  } else if (isPlayingRecording) {
-    microphoneBtn = 'Playing';
-  }
-  useUnmount(() => {
-    if (isStartedAudio) {
-      localAudio.stop();
-    }
-    if (isStartedVideo) {
-      localVideo.stop();
-    }
-  });
-
   return (
-    <div className="js-preview-view">
-      <div id="js-preview-view" className="container preview__root">
-        <span>
-          <h1>Please wait for the researcher to join</h1>
-        </span>
-        <div className="container video-app">
-          <div className="preview-video">
-            <video className={classNames({ 'preview-video-show': !isInVBMode })} muted={true} ref={videoRef} />
-            <canvas
-              className={classNames({ 'preview-video-show': isInVBMode })}
-              width="1280"
-              height="720"
-              ref={canvasRef}
-            />
-          </div>
-          <div className="video-footer video-operations video-operations-preview">
-            <div>
-              <MicrophoneButton
-                isStartedAudio={isStartedAudio}
-                isMuted={isMuted}
-                onMicrophoneClick={onMicrophoneClick}
-                onMicrophoneMenuClick={onMicrophoneMenuClick}
-                microphoneList={micList}
-                speakerList={speakerList}
-                activeMicrophone={activeMicrophone}
-                activeSpeaker={activeSpeaker}
-              />
-              <CameraButton
-                isStartedVideo={isStartedVideo}
-                onCameraClick={onCameraClick}
-                onSwitchCamera={onSwitchCamera}
-                onBlurBackground={onBlurBackground}
-                cameraList={cameraList}
-                activeCamera={activeCamera}
-                isBlur={isBlur}
-                isPreview={true}
-              />
+    <div>
+      {!loggedInUsername ? (
+          <div className="login-container">
+            <div className="login-box">
+              <div className="login-box-content">
+                <p className="login-title">Login</p>
+                <form onSubmit={(e) => {
+                  e.preventDefault(); // Prevents the default form submission behavior
+                  handleSubmit(e);
+                }}>                
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    className="login-input"
+                    placeholder="username"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    className="login-input"
+                    placeholder="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button type="submit" className="login-button">Login</button>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="audio-test">
-          <div className="audio-test-wrap">
-            <h3>Speaker Test</h3>
-            <div className="speaker-action">
-              <Button type="primary" onClick={onTestSpeakerClick} className="speaker-btn">
-                {isPlayingAudio ? 'Stop' : 'Test Speaker'}
-              </Button>
-              <Select
-                onChange={(value) => {
-                  setActiveSpeaker(value);
-                }}
-                value={activeSpeaker}
-                className="speaker-list"
-              >
-                {speakerList.map((item) => {
-                  return (
-                    <Option value={item.deviceId} key={item.deviceId}>
-                      {item.label}
-                    </Option>
-                  );
-                })}
-              </Select>
-            </div>
-            <div className="speaker-output">
-              <span className="speaker-label">Output level</span>
-              <Progress percent={outputLevel} showInfo={false} />
-            </div>
+      ) : (
+        <div>
+          <div className="nav">
+            <div style={{ flex: 1 }}></div>
+            <p style={{ marginRight: '20px', fontSize: '18px' }}>You are logged in as {loggedInUsername}</p>
+
+            {isResearcher && (
+              <button style={{ marginRight: '20px' }} onClick={() => history.push('/r')} className="researcher-button">
+                Researcher Page
+              </button>
+            )}
+
+            <button style={{ marginRight: '20px' }} onClick={handleLogout} className="logout-button">
+              Logout
+            </button>
           </div>
-          <div className="audio-test-wrap">
-            <h3>Microphone Test</h3>
-            <div className="speaker-action">
-              <Button type="primary" onClick={onTestMicrophoneClick} className="speaker-btn">
-                {microphoneBtn}
-              </Button>
-              <Select
-                onChange={(value) => {
-                  setActiveMicrophone(value);
-                }}
-                value={activeMicrophone}
-                className="speaker-list"
-              >
-                {micList.map((item) => {
-                  return (
-                    <Option value={item.deviceId} key={item.deviceId}>
-                      {item.label}
-                    </Option>
-                  );
-                })}
-              </Select>
-            </div>
-            <div className="speaker-output">
-              <span className="speaker-label">Input level</span>
-              <Progress percent={inputLevel} showInfo={false} />
-            </div>
+          <div className="video">
+          <h1>FIT Project Prototype</h1>
+            <Webcam audio={false} ref={webcamRef} />
+            <button onClick={() => onWebcamClick(userGroup)}>
+              Join Room
+            </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
-
-export default PreviewContainer;
+export default Home;

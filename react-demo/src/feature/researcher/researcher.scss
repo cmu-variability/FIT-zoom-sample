@@ -19,6 +19,38 @@
   border-color: #747487;
 }
 
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 200px); /* Creates as many columns of 200px as can fit in the container */
+  gap: 20px; /* Adjust the space between grid items */
+  justify-content: center; /* Center grid items horizontally */
+  padding: 20px; /* Adds padding around the entire grid for spacing */
+}
+
+.video-item {
+  background-color: white; /* Sets the card background to white */
+  border: 1px solid black; /* Sets the border color to black */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Optional: Adds a subtle shadow around the card */
+  width: 200px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center; /* Centers items horizontally */
+  padding: 10px;
+  box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+  border-radius: 4px; /* Optional: rounds corners of the card */
+}
+
+.video-item a, .video-item span {
+  text-align: center; /* Centers the text within each item */
+  word-break: break-word; /* Ensures text breaks to avoid overflow */
+}
+
+.video-item span {
+  font-size: 0.8rem;
+  margin-top: 10px; /* Adds margin at the top of the timestamp for spacing */
+}
 
 .navdoc {
   flex-grow: 1;

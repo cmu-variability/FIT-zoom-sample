@@ -21,6 +21,7 @@ import VideoNonSAB from './feature/video/video-non-sab';
 import Preview from './feature/preview/preview';
 import WaitingRoom from './feature/waiting-room/waiting-room';
 import Researcher from './feature/researcher/researcher';
+import Admin from './feature/admin/admin';
 import ViewVideo from './feature/view-video/view-video';
 
 import { isAndroidBrowser } from './utils/platform';
@@ -343,8 +344,18 @@ function App(props: AppProps) {
                 exact
               />
               <Route
+                path="/home"
+                render={(props) => <NewHome {...props} status={status} onLeaveOrJoinSession={onLeaveOrJoinSession} createVideoToken={createVideoToken} />}
+                exact
+              />
+              <Route
                 path="/new-home"
                 render={(props) => <NewHome {...props} status={status} onLeaveOrJoinSession={onLeaveOrJoinSession} createVideoToken={createVideoToken} />}
+                exact
+              />
+              <Route
+                path="/waiting-room"
+                render={(props) => <WaitingRoom {...props} status={status} onLeaveOrJoinSession={onLeaveOrJoinSession} createVideoToken={createVideoToken} />}
                 exact
               />
               {/* <Route
@@ -370,8 +381,18 @@ function App(props: AppProps) {
                 exact
               />
               <Route
+                path="/researcher"
+                render={(props) => <Researcher {...props} status={status} onLeaveOrJoinSession={onLeaveOrJoinSession} createVideoToken={createVideoToken} />}
+                exact
+              />
+              <Route
                 path="/r/:videoIndex"
-                render={(props) => <ViewVideo {...props} status={status} onLeaveOrJoinSession={onLeaveOrJoinSession} createVideoToken={createVideoToken} />}
+                render={(props) => <ViewVideo />}
+                exact
+              />
+              <Route
+                path="/admin"
+                render={(props) => <Admin />}
                 exact
               />
               {/* <Route

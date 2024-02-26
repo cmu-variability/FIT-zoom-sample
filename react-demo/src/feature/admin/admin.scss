@@ -19,6 +19,7 @@
   border-color: #747487;
 }
 
+
 .navdoc {
   flex-grow: 1;
 }
@@ -27,6 +28,7 @@
   margin-right: 2rem;
 }
 
+
 .navdoc span {
   margin: 0 10px 0 0;
   padding-left: 1rem;
@@ -34,25 +36,23 @@
   border-color: #747487;
 }
 
-.video {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+
+
+.home {
+  padding-top: 10vh;
+  h1{
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  .feature-entry {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    .entry-item{
+      margin: 0 20px 50px 0;
+      .ant-card-cover {
+        padding-top:20px
+      }
+    }
+  }
 }
-
-h1 {
-  margin-bottom: 20px; /* Add space between the header and the video box */
-}
-
-.video button {
-  margin-top: 20px; /* Adjust spacing as needed */
-  cursor: pointer;
-  width: 150px; /* Adjust width as needed */
-  height: 50px; /* Adjust height as needed */
-  font-size: 18px; /* Adjust font size as needed */
-}
-
-
-

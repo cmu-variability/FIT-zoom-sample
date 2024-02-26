@@ -1,7 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, collection, getDocs, getDoc, updateDoc, arrayRemove, arrayUnion, addDoc, query, onSnapshot, orderBy } from "firebase/firestore";
-
+import { getFirestore, doc, setDoc, collection, getDocs, getDoc, updateDoc, arrayRemove, arrayUnion, addDoc, query, onSnapshot, orderBy, deleteDoc, serverTimestamp, FirestoreError } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import moment from 'moment-timezone';
 
@@ -19,7 +18,7 @@ export const checkLoginCredentials = async (username: string, password: string) 
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.password === password) {
-          return { valid: true, group: userData.group, researcher: userData.researcher };
+          return { valid: true, group: userData.group, isResearcher: userData.isResearcher, researcher: userData.researcher };
         }
       }
       return { valid: false };
@@ -145,154 +144,162 @@ export const haveUserJoinRoom = async (username : string | null, group: string) 
 };
 
 
-export const createVideoReference = async (userId: any, videoMetadata: any, startTime: any) => {
-  try {
-    const videoRef = doc(firestore, `videos/${userId}`);
-    await setDoc(videoRef, {
-      videoArray: arrayUnion({
-        metadata: videoMetadata,
-        startTime: startTime,
-        criticalMoments: []
-      })
-    }, { merge: true }); // Merge ensures that existing data in the document is not overwritten
-    console.log('Video reference updated in Firestore.');
-  } catch (error) {
-    console.error('Error updating video reference:', error);
-  }
+export const createVideoReference = async (userId: any) => {
+  const videoRef = doc(collection(firestore, 'videos'));
+
+  const callStartTime = moment().tz('America/New_York').format();
+
+  await setDoc(videoRef, {
+    userId,
+    callStartTime,
+    criticalMoments: []
+  });
+  console.log('Video reference created with ID:', videoRef.id);
+  return videoRef.id; // Return the newly created document ID
 };
 
-
-export const storeVideoReference = async (userId: any, videoPath: any) => {
-  try {
-    const videoRef = doc(firestore, `videos/${userId}`);
-    const videoDoc = await getDoc(videoRef);
-
-    if (videoDoc.exists()) {
-      let videoArray = videoDoc.data().videoArray || [];
-      // Identify the correct video in the array to update
-      // For example, find the video by its startTime or metadata
-
-      // let videoIndex = videoArray.findIndex(v => -1);
-      let videoIndex = videoArray.length - 1;
-      if (videoIndex !== -1) {
-        videoArray[videoIndex].path = videoPath;
-        await updateDoc(videoRef, { videoArray });
-      }
-    }
-    console.log('Video path updated in Firestore.');
-  } catch (error) {
-    console.error('Error updating video path:', error);
+export const uploadVideo = async (videoId: any, videoFile: any) => {
+  if (!videoId) {
+    throw new Error("videoId is required but was not provided.");
   }
-};
 
-
-export const uploadVideo = async (file: any) => {
   const storage = getStorage();
-  const storageRef = ref(storage, `videos/${file.name}`);
+  const videoRef = ref(storage, `videos/${videoId}`); // Use the video document ID as the storage reference
 
-  try {
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
-    return downloadURL;
-  } catch (error) {
-    console.error("Error uploading video:", error);
-    throw error; // Rethrow the error for handling in the component
-  }
+  await uploadBytes(videoRef, videoFile);
+  const downloadURL = await getDownloadURL(videoRef);
+
+  const callEndTime = moment().tz('America/New_York').format();
+
+  console.log("downloadURL: ", downloadURL);
+  // Update the Firestore document with the video path
+  const docRef = doc(firestore, 'videos', videoId);
+  await updateDoc(docRef, {
+    videoURL: downloadURL,
+    videoStorageId: videoId,
+    callEndTime: callEndTime
+  });
+
+  return downloadURL; // Return the download URL
 };
 
-export const markCriticalMoment = async (username: any, comment: any, researcher: any) => {
-  try {
-    const videoRef = doc(firestore, `videos/${researcher}`);
-    const videoDoc = await getDoc(videoRef);
-
-    if (videoDoc.exists()) {
-      let videoArray = videoDoc.data().videoArray || [];
-      let videoIndex = videoArray.length - 1; // Assuming each video has a unique ID
-
-      if (videoIndex !== -1) {
-        const video = videoArray[videoIndex];
-        const startTime = moment(video.startTime);
-        // Convert time to Moment object if it's not already
-        const callStartTime = moment().tz('America/New_York');
-        // Calculate the time offset in milliseconds (or in any other unit you prefer)
-        const timeOffset = callStartTime.diff(startTime);
-
-        // Add the new critical moment
-        video.criticalMoments.push({
-          username: username,
-          time: timeOffset, // Use the calculated time offset
-          comment: comment
-        });
-
-        // Update the document
-        await updateDoc(videoRef, { videoArray });
-        console.log('Critical moment added successfully.');
-      } else {
-        console.log('Video not found.');
-      }
-    } else {
-      console.log('No document found for this username.');
-    }
-  } catch (error) {
-    console.error('Error marking critical moment:', error);
-  }
-};
-
-
-export interface VideoDetail {
-  index: number;
-  path: string;
-  startTime: number; // or Date, depending on how you store it
-}
-
-
-export const fetchPathsAndTimes = async (username: string): Promise<VideoDetail[]> => {
-  try {
-    const videoRef = doc(firestore, `videos/${username}`);
-    const videoDoc = await getDoc(videoRef);
-
-    if (videoDoc.exists()) {
-      const videoData = videoDoc.data();
-      return videoData.videoArray.map((video: any, index: number) => ({
-        index: index,
-        path: video.path,
-        startTime: video.startTime
-      }));
-    } else {
-      console.log('No videos found for this user.');
-      return [];
-    }
-  } catch (error) {
-    console.error('Error fetching paths and times:', error);
-    return [];
-  }
-};
-
-interface CriticalMoment {
-  time: number; // or Date, depending on how you store it
+export interface CriticalMoment {
+  username: string;
+  time: number; // Storing time as Unix timestamp in milliseconds
   comment: string;
 }
 
-export const fetchCriticalMoments = async (username: string | null, videoIndex: number): Promise<CriticalMoment[]> => {
-  try {
-    const videoRef = doc(firestore, `videos/${username}`);
-    const videoDoc = await getDoc(videoRef);
-    console.log(username, videoIndex)
 
-    if (videoDoc.exists()) {
-      const videoData = videoDoc.data();
-      const video = videoData.videoArray[videoIndex];
-      if (video && video.criticalMoments) {
-        return video.criticalMoments as CriticalMoment[];
-      }
-      return [];
-    } else {
-      console.log('No videos found for this user.');
-      return [];
+export const markCriticalMoment = async (
+  username: string,
+  isResearcher: boolean,
+  currentVideoId: string | null,
+  comment: string
+): Promise<void> => {
+  try {
+    console.log("Trying to mark a critical moment");
+
+    if (!currentVideoId) {
+      console.error("No video ID provided");
+      return;
     }
+
+    // Construct the document path using the currentVideoId
+    const videoRef = doc(firestore, `videos/${currentVideoId}`);
+
+    // Fetch the video document to get the start time
+    const videoDoc = await getDoc(videoRef);
+    if (!videoDoc.exists()) {
+      console.error("Video document does not exist");
+      return;
+    }
+    const videoData = videoDoc.data();
+    const callStartTime = videoData.callStartTime;
+    if (!callStartTime) {
+      console.error("Start time not found for the video");
+      return;
+    }
+
+    // Convert callStartTime to moment object for calculation
+    const callStartMoment = moment(callStartTime);
+    // Calculate the time elapsed since the video started in milliseconds
+    const currentTime = moment();
+    const elapsedTime = currentTime.diff(callStartMoment);
+
+    // Create a CriticalMoment object with the elapsed time
+    const criticalMoment: CriticalMoment = {
+      username: username,
+      time: elapsedTime, // Elapsed time in milliseconds from the start of the video
+      comment: comment
+    };
+
+    // Append the new critical moment to the 'criticalMoments' array for the video document
+    await updateDoc(videoRef, {
+      criticalMoments: arrayUnion(criticalMoment)
+    });
+
+    console.log("Critical moment marked successfully.");
   } catch (error) {
-    console.error('Error fetching critical moments:', error);
-    return [];
+    console.error("Error marking critical moment:", error);
+    throw error; // Rethrow the error for caller handling, if necessary
+  }
+};
+
+
+export interface VideoData {
+  // Add properties expected from your video data here
+  videoStorageId?: string;
+  startTime?: any;
+  videoURL?: any;
+  callStartTime?: any;
+  criticalMoments: CriticalMoment[];
+  videoId?: any;
+}
+
+
+export const fetchAllVideos = async (): Promise<VideoData[]> => {
+  try {
+    const q = query(collection(firestore, "videos"));
+    const querySnapshot = await getDocs(q);
+    const videos: VideoData[] = querySnapshot.docs.map(doc => {
+      // Assuming the rest of the document data aligns with the VideoData type
+      return {
+        id: doc.id, // Use 'id' to store the document ID
+        ...doc.data() as Omit<VideoData, 'id'>, // Spread the rest of the document data
+      };
+    });
+    return videos;
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    throw error; // Rethrow the error for handling elsewhere
+  }
+};
+
+
+export const fetchVideoData = async (videoIndex: string): Promise<VideoData | null> => {
+  const videoRef = doc(firestore, `videos/${videoIndex}`);
+  const videoDoc = await getDoc(videoRef);
+
+  if (videoDoc.exists()) {
+    const data = videoDoc.data();
+
+    // Providing a default value for criticalMoments if it does not exist.
+    const criticalMoments = data.criticalMoments || [];
+
+    // Constructing the VideoData object with all required properties.
+    const videoData: VideoData = {
+      videoId: videoDoc.id,
+      criticalMoments: criticalMoments,
+      videoURL: data.videoURL,
+      // Include other properties from data or provide default values
+      // For example:
+      // title: data.title || "Untitled",
+      // description: data.description || "No description",
+    };
+
+    return videoData;
+  } else {
+    return null;
   }
 };
 
@@ -328,4 +335,135 @@ export const onChatMessagesSnapshot = (userGroup: string, callback: Function) =>
       console.log('No chat document found for the user group:', userGroup);
     }
   });
+};
+
+export interface User {
+  id: string;
+  group: string;
+  nextGroup: string;
+  password: string;
+  isResearcher: boolean;
+}
+
+export const fetchUsers = async (): Promise<User[]> => {
+  const usersCol = collection(firestore, 'Users');
+  const userSnapshot = await getDocs(usersCol);
+  return userSnapshot.docs.map(doc => {
+    const userData = doc.data();
+    return {
+      id: doc.id,
+      group: userData.group,
+      nextGroup: userData.nextGroup,
+      password: userData.password,
+      isResearcher: userData.isResearcher
+    } as User;
+  });
+};
+
+export interface UserData {
+  group: string;
+  isResearcher: boolean;
+  nextGroup: string;
+  password: string;
+}
+
+export const fetchUserData = async (userId: string): Promise<UserData | undefined> => {
+  const docRef = doc(firestore, 'Users', userId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    return docSnap.data() as UserData;
+  } else {
+    console.log('No such document!');
+    return undefined;
+  }
+};
+
+export interface UserData2 {
+  id: string; // Assuming the document name will be stored as 'id'
+  group: string;
+  isResearcher: boolean;
+  nextGroup: string;
+  password: string;
+}
+
+export const updateUser = async (userId: string, editData: UserData): Promise<void> => {
+  try {
+    const userRef = doc(firestore, 'Users', userId); // Correctly obtain a document reference
+    await updateDoc(userRef, {
+      group: editData.group,
+      isResearcher: editData.isResearcher,
+      nextGroup: editData.nextGroup,
+      password: editData.password,
+    });
+    console.log('User updated successfully');
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error; // Allows error handling in the component
+  }
+};
+
+export const createUser = async (userData: UserData2): Promise<void> => {
+  try {
+    // Ensure 'id' is used as the document ID
+    await setDoc(doc(firestore, 'Users', userData.id), {
+      group: userData.group,
+      isResearcher: userData.isResearcher,
+      nextGroup: userData.nextGroup,
+      password: userData.password,
+    });
+    console.log('User created successfully');
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+};
+
+export const deleteUser = async (userId: string) => {
+  try {
+    await deleteDoc(doc(firestore, "Users", userId));
+    console.log(`User with ID ${userId} deleted successfully.`);
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw new Error("Failed to delete user.");
+  }
+};
+
+
+export const onVideoIdSnapshot = (
+  userGroup: string,
+  setCurrentVideoId: React.Dispatch<React.SetStateAction<string | null>>
+) => {
+  const docRef = doc(firestore, "currentMeetings", userGroup);
+
+  return onSnapshot(docRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      // Update state with the new videoId, or null if it doesn't exist
+      setCurrentVideoId(data.videoId || null);
+    } else {
+      // Document does not exist, might want to handle this case in your application
+      console.log(`No currentMeeting document found for userGroup: ${userGroup}`);
+      setCurrentVideoId(null);
+    }
+  }, (error) => {
+    // Handle any errors that occur during the snapshot
+    console.error("Error fetching videoId:", error);
+    setCurrentVideoId(null); // Optionally reset or handle state on error
+  });
+};
+
+
+export const updateVideoIdInMeeting= async (documentId: string, videoId: string): Promise<void> => {
+  const docRef = doc(firestore, "currentMeetings", documentId);
+  console.log("inside the firebase function: ", documentId, videoId);
+  try {
+    await updateDoc(docRef, {
+      videoId: videoId
+    });
+    console.log(`Successfully updated videoId to "${videoId}" for documentId: ${documentId}`);
+  } catch (error) {
+    console.error("Error updating videoId:", error);
+    throw error; // Rethrow to let calling code handle it
+  }
 };

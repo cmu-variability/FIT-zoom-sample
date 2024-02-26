@@ -7,6 +7,7 @@ import './new-home.scss';
 import { checkLoginCredentials, haveUserJoinRoom } from '../../firebaseConfig'; // adjust the import path as needed
 import { useAuth } from '../../authContext'; // Adjust the path as per your directory structure
 import Webcam from 'react-webcam';
+import { set } from 'lodash';
 
 const { Meta } = Card;
 interface HomeProps extends RouteComponentProps {
@@ -25,18 +26,27 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   if (!authContext) {
     return null; // or some other appropriate handling
   }
-  const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher } = authContext;
+  const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher, researcher, setResearcher } = authContext;
 
 
   useEffect(() => {
     // Check if user is already logged in
     const storedUsername = localStorage.getItem('loggedInUsername');
-    if (storedUsername) {
-      setLoggedInUsername(storedUsername);
-      // Redirect to home page or dashboard as needed
-      history.push('/new-home');
-    }
+    const storedUserGroup = localStorage.getItem('loggedInUserGroup');
+    const storedIsResearcher = localStorage.getItem('loggedInIsResearcher');
+    const storedResearcher = localStorage.getItem('loggedInResearcher')
+
+    if (storedIsResearcher === "true") {
+      history.push('/r');
+    } 
+    
+    setLoggedInUsername(storedUsername);
+    setUserGroup(storedUserGroup || "");
+    setIsResearcher(storedIsResearcher === "true");
+    setResearcher(storedResearcher || "");
+
   }, [setLoggedInUsername, history]);
+
 
   const handleLogout = () => {
     localStorage.removeItem('loggedInUsername');
@@ -46,13 +56,23 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     history.push('/');
   };
 
+  const handleGoToResearch = () => {
+    console.log("in go to researcher: ", isResearcher);
+    console.log("locally stored loggedInIsResearcher", localStorage.getItem('loggedInIsResearcher'));
+    history.push('/r');
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("what???");
     e.preventDefault();
     const result = await checkLoginCredentials(username, password);
+    console.log("result: ", result, result.isResearcher);
     if (result.valid) {
       setUserGroup(result.group)
       setLoggedInUsername(username);
-      setIsResearcher(result.researcher)
+      setIsResearcher(result.isResearcher)
+      setResearcher(result.researcher);
       if (!status) {
         onLeaveOrJoinSession();
       }
@@ -117,12 +137,13 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
           </div>
       ) : (
         <div>
+
           <div className="nav">
             <div style={{ flex: 1 }}></div>
             <p style={{ marginRight: '20px', fontSize: '18px' }}>You are logged in as {loggedInUsername}</p>
 
             {isResearcher && (
-              <button style={{ marginRight: '20px' }} onClick={() => history.push('/r')} className="researcher-button">
+              <button style={{ marginRight: '20px' }} onClick={handleGoToResearch} className="researcher-button">
                 Researcher Page
               </button>
             )}
@@ -131,13 +152,15 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
               Logout
             </button>
           </div>
-          <div className="video">
-          <h1>FIT Project Prototype</h1>
-            <Webcam audio={false} ref={webcamRef} />
+
+          <div className="video" style={{marginTop: '-60px'}} >
+            <h1 style={{}}>FIT Project Prototype</h1>
+            <Webcam style={{width: '60vw', height: '60vh'}} audio={false} ref={webcamRef} />
             <button onClick={() => onWebcamClick(userGroup)}>
               Join Room
             </button>
           </div>
+
         </div>
       )}
     </div>

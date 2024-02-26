@@ -1,125 +1,82 @@
-/* eslint-disable no-restricted-globals */
-import React, { useState, useEffect } from 'react';
-import { RouteComponentProps, useParams } from 'react-router-dom';
-import { Card, Button } from 'antd';
-import { IconFont } from '../../component/icon-font';
-import './view-video.scss';
-import { checkLoginCredentials } from '../../firebaseConfig'; // adjust the import path as needed
-import { useAuth } from '../../authContext'; // Adjust the path as per your directory structure
-import { fetchCriticalMoments } from '../../firebaseConfig';
-import { current } from 'immer';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { fetchVideoData, VideoData, CriticalMoment } from '../../firebaseConfig';
+import { useHistory } from 'react-router-dom';
 
 interface VideoParams {
   videoIndex: string;
 }
 
-const { Meta } = Card;
-interface HomeProps extends RouteComponentProps {
-  status: string;
-  onLeaveOrJoinSession: () => void;
-  createVideoToken: (topic: string, isResearcher: boolean) => any;
-}
-
-const Home: React.FunctionComponent<HomeProps> = (props) => {
-  const { history, status, onLeaveOrJoinSession, createVideoToken } = props;
-
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [currentMeetings, setCurrentMeetings] = useState<{ [key: string]: any }>([]); // Define state as an array of strings
-
+const ViewVideo: React.FunctionComponent = () => {
   const { videoIndex } = useParams<VideoParams>();
-  const [criticalMoments, setCriticalMoments] = useState<{ [key: string]: any }>([]); // Define state as an array of strings
+  const [videoData, setVideoData] = useState<VideoData | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null); // Reference to the video element
 
-  const authContext = useAuth();
-  if (!authContext) {
-    // Handle the case where auth context is null. For example:
-    return null; // or some other appropriate handling
-  }
-  const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher } = authContext;
+  const history = useHistory();
 
+  useEffect(() => {
+    const fetchVideo = async () => {
+      const vd = await fetchVideoData(videoIndex);
+      setVideoData(vd);
+    };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = await checkLoginCredentials(username, password);
-    if (result.valid) {
-      console.log('Login successful. Group:', result.group);
-      setUserGroup(result.group)
-      setLoggedInUsername(username);
-      if (!status) {
-        onLeaveOrJoinSession();
+    fetchVideo();
+  }, [videoIndex]);
+
+  const handleSkipToMoment = (time: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+      if (videoRef.current.paused) {
+        videoRef.current.play();
       }
-    } else {
-      console.log('Invalid username or password');
-      // Handle invalid login, maybe show an error message
     }
   };
 
-  useEffect(() => {
-    if (loggedInUsername) {
-      const fetchMoments = async () => {
-        const moments = await fetchCriticalMoments(loggedInUsername, Number(videoIndex));
-        console.log(moments);
-        setCriticalMoments(moments);
-      };
-      console.log("authContext: ", authContext);
-      fetchMoments();
-    }
-  }, [loggedInUsername]);
-
+  const formatTime = (milliseconds: number) => {
+    // Convert milliseconds to seconds
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    // Calculate minutes and seconds
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    // Pad the minutes and seconds with leading zeros if necessary, and return the formatted time
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div>
-      {!loggedInUsername ? (
-          <div className="login-container">
-            <div className="login-box">
-              <div className="login-box-content">
-                <p className="login-title">Login</p>
-                <form onSubmit={(e) => {
-                  e.preventDefault(); // Prevents the default form submission behavior
-                  handleSubmit(e);
-                }}>                
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    className="login-input"
-                    placeholder="username"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    className="login-input"
-                    placeholder="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button type="submit" className="login-button">Login</button>
-                </form>
-              </div>
-            </div>
-          </div>
-      ) : (
-        <div>
-          <div className="nav">
-            <h1>Critical Moments</h1>
-            <ul>
-              {criticalMoments.map((moment: any, index: any) => (
-                <li key={index}>
-                  <p>Time: {moment.time}</p>
+      {videoData ? (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <button onClick={() => history.goBack()} style={{ cursor: 'pointer', marginRight: '20px', fontSize: '16px', padding: '10px' }}>
+              Go Back
+            </button>
+            <h1 style={{ margin: 0 }}>Video Details</h1>
+          </div>          
+          <video
+            ref={videoRef}
+            controls
+            style={{ width: '100%' }}
+            src={videoData.videoURL}
+            crossOrigin="anonymous"
+          ></video>
+          <h2>Critical Moments</h2>
+          <ul>
+            {videoData.criticalMoments.map((moment: CriticalMoment, index: number) => (
+              <li key={index}>
+                <button onClick={() => handleSkipToMoment(moment.time / 1000)}> {/* Convert milliseconds to seconds */}
+                  <p>Time: {formatTime(moment.time)}</p>
+                  <p>User: {moment.username}</p>
                   <p>Comment: {moment.comment}</p>
-                </li>
-              ))}
-            </ul>
-            <span onClick={()=> console.log(loggedInUsername)}>hi</span>
-          </div>
-        </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p>Loading video data...</p>
       )}
     </div>
   );
 };
-export default Home;
+
+export default ViewVideo;

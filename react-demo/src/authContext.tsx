@@ -34,17 +34,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, initialSta
   };
 
   const setUserGroup = (group: string) => {
-    localStorage.setItem('userGroup', group);
+    localStorage.setItem('loggedInUserGroup', group);
     setUserGroupState(group);
   };
 
   const setIsResearcher = (isResearcher: boolean) => {
-    localStorage.setItem('isResearcher', String(isResearcher));
+    console.log('in setIsResearcher: ', String(isResearcher));
+    localStorage.setItem('loggedInIsResearcher', String(isResearcher));
     setIsResearcherState(isResearcher);
   };
 
   const setResearcher = (researcher: string) => {
-    localStorage.setItem('researcher', researcher);
+    localStorage.setItem('loggedInResearcher', researcher);
     setResearcherState(researcher);
   };
 

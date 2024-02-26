@@ -34,7 +34,7 @@ import { IconFont } from '../../../component/icon-font';
 import { VideoMaskModel } from './video-mask-modal';
 
 import { RouteComponentProps } from 'react-router-dom';
-import { updateUserGroup, haveUserLeaveRoom, fetchNextUserGroup, uploadVideo, storeVideoReference, createVideoReference, markCriticalMoment } from '../../../firebaseConfig';
+import { updateUserGroup, haveUserLeaveRoom, fetchNextUserGroup, uploadVideo, createVideoReference, markCriticalMoment, onVideoIdSnapshot, updateVideoIdInMeeting } from '../../../firebaseConfig';
 import { useAuth } from '../../../authContext'; // Adjust the path as per your directory structure
 import moment from 'moment-timezone';
 import { useModal } from '../../../ModalContext';
@@ -103,6 +103,8 @@ const VideoFooter = (props: VideoFooterProps) => {
   const recordedChunksRef = useRef<Blob[]>([]);
 
   const { modalStates, setModalState } = useModal();
+
+  const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
 
   const handleChatButtonClick = () => {
     setModalState('chatModal', !modalStates.chatModal);
@@ -407,44 +409,63 @@ const VideoFooter = (props: VideoFooterProps) => {
           recordedChunksRef.current.push(event.data);
         }
       };
-      mediaRecorder.onstop = handleStopRecording;
+      mediaRecorder.onstop = null;
       mediaRecorder.start();
       mediaRecorderRef.current = mediaRecorder;
       setIsRecording(true);
-      const callStartTime = moment().tz('America/New_York').format();
-      await createVideoReference(loggedInUsername, { title: 'Screen Recording' }, callStartTime);
-      console.log('Recording uploaded successfully');    } catch (error) {
+  
+      // Start time for the video
+  
+      const videoId = await createVideoReference(loggedInUsername);
+      console.log("videoID is set: ", videoId);
+      // Save videoId for later use (e.g., in state)
+      setCurrentVideoId(videoId); // Assuming you have a state hook to hold the current video ID
+      updateVideoIdInMeeting(userGroup, videoId).then((res) => {
+        console.log("res: ", res);
+      })
+      console.log('Recording started successfully');
+    } catch (error) {
       console.error('Error starting screen recording:', error);
     }
   };
+  
 
   // Function to stop screen recording
-  const stopRecording = () => {
+  const stopRecording = async () => {
+
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
-      setIsRecording(false);
-    }
-  };
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current = null;
+        setIsRecording(false);
 
-  // Function to handle recording stop
-  const handleStopRecording = async () => {
-    const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-    const videoFile = new File([videoBlob], 'screen-recording.webm', { type: 'video/webm' });
+        // Wait until the mediaRecorder has stopped before proceeding
+        await new Promise(resolve => setTimeout(resolve, 0)); // Ensure stop event handlers have run
 
-    // Upload video file to Firebase
-    try {
-      const videoPath = await uploadVideo(videoFile);
-      await storeVideoReference(loggedInUsername, videoPath);
-    } catch (error) {
-      console.error('Error uploading recording:', error);
+        const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const videoFile = new File([videoBlob], 'screen-recording.webm', { type: 'video/webm' });
+
+        try {
+            // Ensure currentVideoId is not null before proceeding
+            if (currentVideoId) {
+                const downloadURL = await uploadVideo(currentVideoId, videoFile);
+                console.log('Recording uploaded successfully to:', downloadURL);
+            } else {
+                console.log('No currentVideoId found, skipping upload');
+            }
+        } catch (error) {
+            console.error('Error uploading recording:', error);
+        }
     }
-  };
+};
+
 
   //Function to markCriticalMoments
   const handleMarkCriticalMoment = async () => {
     try {
-      await markCriticalMoment(loggedInUsername, "comment", researcher)
+      if (loggedInUsername !== null) {
+        console.log(currentVideoId);
+        await markCriticalMoment(loggedInUsername, isResearcher, currentVideoId, "comment" )
+      }
     } catch (error) {
       console.error('Error marking critical moment:', error);
     }
@@ -614,6 +635,20 @@ const VideoFooter = (props: VideoFooterProps) => {
       }
     };
   }, [mediaStream, zmClient]);
+
+
+  useEffect(() => {
+    let unsubscribe: Function;
+    if (userGroup) {
+      unsubscribe = onVideoIdSnapshot(userGroup, setCurrentVideoId);
+    }
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [userGroup]);
+
+
+
   const recordingButtons: RecordButtonProps[] = getRecordingButtons(recordingStatus, zmClient.isHost());
   return (
     <div className={classNames('video-footer', className)}>
@@ -686,15 +721,17 @@ const VideoFooter = (props: VideoFooterProps) => {
         }}
         {...recordingButtons[0]} */}
 
-      <button onClick={isRecording ? stopRecording : startRecording}>
-        {isRecording ? 'Stop Recording' : 'Start Recording'}
-      </button>
+      {isResearcher && (
+        <button onClick={isRecording ? stopRecording : startRecording}>
+          {isRecording ? 'Stop Recording' : 'Start Recording'}
+        </button>
+      )}
 
       <button onClick={handleMarkCriticalMoment}>
         Mark Critical Moment
       </button>
 
-      <button onClick={handleChatButtonClick}>Toggle Chat Modal</button>
+      <button style={{marginRight: 10}} onClick={handleChatButtonClick}>Open Chat</button>
       <ChatModal />
       
       {liveTranscriptionClient?.getLiveTranscriptionStatus().isLiveTranscriptionEnabled && (

@@ -17,8 +17,10 @@ import { useNetworkQuality } from './hooks/useNetworkQuality';
 import ReportBtn from './components/report-btn';
 import ShareView from './components/share-view';
 import RemoteCameraControlPanel from './components/remote-camera-control';
+import { useHistory } from 'react-router-dom';
 
 import './video.scss';
+
 const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => {
   const zmClient = useContext(ZoomContext);
   const {
@@ -31,6 +33,7 @@ const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => 
   const canvasDimension = useCanvasDimension(mediaStream, videoRef);
   const activeVideo = useActiveVideo(zmClient);
   const { page, pageSize, totalPage, totalSize, setPage } = usePagination(zmClient, canvasDimension);
+  const history = useHistory(); // Initialize useHistory hook
 
 
   const { visibleParticipants, layout: videoLayout } = useGalleryLayout(
@@ -48,7 +51,8 @@ const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => 
   );
 
   const avatarActionState = useAvatarAction(zmClient, visibleParticipants);
-  const networkQuality = useNetworkQuality(zmClient);
+  const networkQuality = useNetworkQuality(zmClient);  
+
   return (
     <div className="viewport">
       <ShareView ref={shareViewRef} onRecieveSharingChange={setIsRecieveSharing} />
