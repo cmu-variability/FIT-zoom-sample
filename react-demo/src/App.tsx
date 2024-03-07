@@ -22,7 +22,8 @@ import Preview from './feature/preview/preview';
 import WaitingRoom from './feature/waiting-room/waiting-room';
 import Researcher from './feature/researcher/researcher';
 import Admin from './feature/admin/admin';
-import ViewVideo from './feature/view-video/view-video';
+import ViewVideo from './feature/view-video-and-moments/view-video-and-moments';
+import ViewMoments from './feature/view-moments/view-moments';
 
 import { isAndroidBrowser } from './utils/platform';
 import { useAuth } from './authContext'; // Adjust the path as per your directory structure
@@ -387,9 +388,14 @@ function App(props: AppProps) {
               />
               <Route
                 path="/r/:videoIndex"
-                render={(props) => <ViewVideo />}
+                render={(props) => <ViewMoments />}
                 exact
               />
+              {/* <Route
+                path="/r/:videoIndex"
+                render={(props) => <ViewVideo />}
+                exact
+              /> */}
               <Route
                 path="/admin"
                 render={(props) => <Admin />}

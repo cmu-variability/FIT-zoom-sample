@@ -10,7 +10,6 @@ import { devConfig } from './config/dev';
 import { b64DecodeUnicode, generateVideoToken } from './utils/util';
 import { AuthProvider } from './authContext';
 import { ModalProvider } from './ModalContext';
-import ChatModal from './ChatModal';
 
 
 

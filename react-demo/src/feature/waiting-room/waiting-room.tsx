@@ -139,7 +139,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
             </button>
           </div>
           <div className="video">
-          <h1>FIT Project Prototype</h1>
+          <h1>Waiting Room: click "join room" when ready and a researcher will be with you shortly</h1>
             <Webcam audio={false} ref={webcamRef} />
             <button onClick={() => onWebcamClick(userGroup)}>
               Join Room

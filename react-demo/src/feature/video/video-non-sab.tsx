@@ -44,7 +44,8 @@ const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => 
       pageSize,
       totalPage,
       totalSize
-    }
+    },
+    
   );
   /**
    * position for self video
@@ -91,7 +92,7 @@ const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => 
         />
         <AvatarActionContext.Provider value={avatarActionState}>
           <ul className="avatar-list">
-            {visibleParticipants.map((user, index) => {
+            {visibleParticipants.map((user: any, index: number) => {
               if (index > videoLayout.length - 1) {
                 return null;
               }

@@ -93,7 +93,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     const fetchVideos = async () => {
       try {
         const videos = await fetchAllVideos();
-        setVideoDetails(videos); // This now expects videos to be of type VideoData[]
+        setVideoDetails(videos);
       } catch (error) {
         console.error("Failed to fetch videos:", error);
       }
@@ -106,6 +106,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     const fetchAndSetCurrentMeetings = async () => {
       const response = await fetchCurrentMeetings();
       if (response.success && response.meetings) {
+        console.log("meetings: ", response.meetings);
         // Assuming response.meetings is an array of meeting objects
         setCurrentMeetings(response.meetings);
       } else {
@@ -171,23 +172,21 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
           <div className="home">
             <h1>Available Rooms:</h1>
             <div className="feature-entry">
-              {currentMeetings.map((meet: { [key: string]: any }) => {
-                const id = Object.keys(meet)[0];
-                const users = meet[id].users;
-                console.log("users: ", users);
-                return (
-                  <Card
-                    cover={<IconFont style={{ fontSize: '72px' }} type={"icon-meeting"} />}
-                    hoverable
-                    style={{ width: 320 }}
-                    className="entry-item"
-                    key={"video"}
-                    onClick={() => onCardClick(id)}
-                  >
-                    <Meta title={id} description={users.join(', ')} />
-                  </Card>
-                );
-              })}
+            {currentMeetings.map((meet: { id: string, users: string[] }) => (
+              <Card
+                cover={<IconFont style={{ fontSize: '72px' }} type="icon-meeting" />}
+                hoverable
+                style={{ width: 320 }}
+                className="entry-item"
+                key={meet.id} // Use the meeting's id property as the key
+                onClick={() => onCardClick(meet.id)}
+              >
+                <Meta 
+                  title={`Room ID: ${meet.id}`} // Display the Room ID
+                  description={`Users: ${meet.users.join(', ')}`} // Join the users array into a single string
+                />
+              </Card>
+            ))}
             </div>
           </div>
 

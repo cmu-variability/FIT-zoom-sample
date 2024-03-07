@@ -34,12 +34,14 @@ import { IconFont } from '../../../component/icon-font';
 import { VideoMaskModel } from './video-mask-modal';
 
 import { RouteComponentProps } from 'react-router-dom';
-import { updateUserGroup, haveUserLeaveRoom, fetchNextUserGroup, uploadVideo, createVideoReference, markCriticalMoment, onVideoIdSnapshot, updateVideoIdInMeeting } from '../../../firebaseConfig';
+import { updateUserGroup, haveUserLeaveRoom, fetchNextUserGroup, uploadVideo, createVideoReference, markCriticalMoment, onVideoIdSnapshot, updateVideoIdInMeeting, showResearcherInRoom, hideResearcherInRoom, getChatFromMeeting, updateVideoWithChat, removeChatFromMeeting } from '../../../firebaseConfig';
 import { useAuth } from '../../../authContext'; // Adjust the path as per your directory structure
 import moment from 'moment-timezone';
 import { useModal } from '../../../ModalContext';
 import ChatModal from '../../../ChatModal';
-
+import CreateAlertModal from '../../../CreateAlertModal';
+import DisplayAlertModal from '../../../DisplayAlertModal';
+import CreateCriticalMomentModal from '../../../CreateCriticalMomentModal';
 
 interface VideoFooterProps extends RouteComponentProps {
   className?: string;
@@ -99,6 +101,7 @@ const VideoFooter = (props: VideoFooterProps) => {
   const [videoMaskVisible, setVideoMaskVisible] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
+  // const [isShowingResearcher, setIsShowingResearcher] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
 
@@ -108,6 +111,10 @@ const VideoFooter = (props: VideoFooterProps) => {
 
   const handleChatButtonClick = () => {
     setModalState('chatModal', !modalStates.chatModal);
+  };
+
+  const handleAlertButtonClick = () => {
+    setModalState('createAlertModal', !modalStates.createAlertModal);
   };
 
 
@@ -305,7 +312,7 @@ const VideoFooter = (props: VideoFooterProps) => {
     await zmClient.leave();
     updateUserGroup(loggedInUsername);
     if (userGroup) {
-      history.push('new-home'); //set to waiting-room
+      history.push('waiting-room'); //set to waiting-room
     } else {
       history.push('r')
     }
@@ -455,16 +462,53 @@ const VideoFooter = (props: VideoFooterProps) => {
         } catch (error) {
             console.error('Error uploading recording:', error);
         }
+        try {
+          if (currentVideoId && currentVideoId) {
+              // Fetch the chat from the current meeting
+              const chatArray = await getChatFromMeeting(userGroup);
+              console.log(chatArray);
+              // Update the video document with the chat
+              await updateVideoWithChat(currentVideoId, chatArray);
+              await removeChatFromMeeting(userGroup);
+              console.log('Chat array added to the video document successfully.');
+          } else {
+              console.log('No currentVideoId or currentMeetingId found, skipping upload and chat update');
+          }
+        } catch (error) {
+            console.error('Error during chat fetch or update:', error);
+        }
     }
 };
+
+// const startShowingResearcher = async () => {
+//   try {
+//       await showResearcherInRoom(userGroup);
+//       setIsShowingResearcher(true);
+//   } catch (error) {
+//       console.error("Error showing researcher", error);
+//   }
+// };
+
+// const stopShowingResearcher = async () => {
+//   try {
+//       await hideResearcherInRoom(userGroup);
+//       setIsShowingResearcher(false);
+//   } catch (error) {
+//       console.error("Error hiding researcher", error);
+//   }
+// };
 
 
   //Function to markCriticalMoments
   const handleMarkCriticalMoment = async () => {
     try {
-      if (loggedInUsername !== null) {
+      if (!isResearcher) {
         console.log(currentVideoId);
-        await markCriticalMoment(loggedInUsername, isResearcher, currentVideoId, "comment" )
+        if (loggedInUsername) {
+          await markCriticalMoment(loggedInUsername, isResearcher, currentVideoId, "category", "comment" )
+        }
+      } else {
+        setModalState('createCriticalMomentModal', !modalStates.createCriticalMomentModal);
       }
     } catch (error) {
       console.error('Error marking critical moment:', error);
@@ -722,9 +766,18 @@ const VideoFooter = (props: VideoFooterProps) => {
         {...recordingButtons[0]} */}
 
       {isResearcher && (
-        <button onClick={isRecording ? stopRecording : startRecording}>
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </button>
+        <>
+          <button onClick={isRecording ? stopRecording : startRecording}>
+            {isRecording ? 'Stop Recording' : 'Start Recording'}
+          </button>
+          <button onClick={handleAlertButtonClick}>
+            Create Alert
+          </button>
+          {/* <button onClick={isShowingResearcher ? stopShowingResearcher : startShowingResearcher}>
+            {isShowingResearcher ? 'Stop Showing Researcher' : 'Show Researchers'}
+          </button> */}
+        </>
+        
       )}
 
       <button onClick={handleMarkCriticalMoment}>
@@ -733,7 +786,10 @@ const VideoFooter = (props: VideoFooterProps) => {
 
       <button style={{marginRight: 10}} onClick={handleChatButtonClick}>Open Chat</button>
       <ChatModal />
-      
+      <CreateAlertModal />
+      <DisplayAlertModal />
+      {currentVideoId && <CreateCriticalMomentModal currentVideoId={currentVideoId} />}
+
       {liveTranscriptionClient?.getLiveTranscriptionStatus().isLiveTranscriptionEnabled && (
         <>
           <LiveTranscriptionButton

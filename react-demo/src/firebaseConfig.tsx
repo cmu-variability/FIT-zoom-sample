@@ -92,19 +92,60 @@ export const checkLoginCredentials = async (username: string, password: string) 
     message?: string;
   }
 
-export const fetchCurrentMeetings = async (): Promise<FetchCurrentMeetingsResponse> => {
-  try {
+  export interface Meeting {
+    id: string;
+    users: Array<any>; // Replace `any` with a more specific type if possible
+    videoId: string;
+    chats: Array<any>; // Replace `any` with a more specific type if possible
+  }
+
+  export const fetchCurrentMeetings = async () => {
+    try {
       const meetingsCollectionRef = collection(firestore, "currentMeetings");
       const querySnapshot = await getDocs(meetingsCollectionRef);
-      const meetings = querySnapshot.docs.map(doc => {
-          return { [doc.id]: doc.data() }; // Map each document to an object
-      });
+      const meetings = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       return { success: true, meetings };
-  } catch (error) {
+    } catch (error) {
       console.error("Error fetching current meetings:", error);
       return { success: false, message: error instanceof Error ? error.message : "An unknown error occurred" };
+    }
+  };
+
+export const deleteCurrentMeeting = async (roomId: string): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const roomRef = doc(firestore, "currentMeetings", roomId);
+    await deleteDoc(roomRef);
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting room:", error);
+    return { success: false, message: error instanceof Error ? error.message : "An unknown error occurred" };
   }
 };
+
+
+export const createNewMeetingRoom = async (roomID: string) => {
+  try {
+    // Create a reference to a new document in 'currentMeetings' collection with the specified roomID
+    const roomRef = doc(collection(firestore, 'currentMeetings'), roomID);
+
+    // Set the initial data for the new meeting room
+    await setDoc(roomRef, {
+      alert: "welcome to the call, we will alert you when everything is ready!",
+      chats: [],
+      users: [],
+      videoId: '', // Set an initial or default value as appropriate
+    });
+
+    console.log('Meeting room created successfully with ID:', roomID);
+  } catch (error) {
+    console.error('Error creating meeting room:', error);
+    throw error; // Rethrow the error for caller handling, if necessary
+  }
+};
+
 
 export const haveUserLeaveRoom = async (username: string | null, group: string) => {
   try {
@@ -185,7 +226,9 @@ export const uploadVideo = async (videoId: any, videoFile: any) => {
 
 export interface CriticalMoment {
   username: string;
+  isResearcher: boolean;
   time: number; // Storing time as Unix timestamp in milliseconds
+  category: string;
   comment: string;
 }
 
@@ -194,6 +237,7 @@ export const markCriticalMoment = async (
   username: string,
   isResearcher: boolean,
   currentVideoId: string | null,
+  category: string, // Added category parameter
   comment: string
 ): Promise<void> => {
   try {
@@ -226,11 +270,13 @@ export const markCriticalMoment = async (
     const currentTime = moment();
     const elapsedTime = currentTime.diff(callStartMoment);
 
-    // Create a CriticalMoment object with the elapsed time
+    // Create a CriticalMoment object with the elapsed time and the new category
     const criticalMoment: CriticalMoment = {
-      username: username,
+      username,
+      isResearcher,
       time: elapsedTime, // Elapsed time in milliseconds from the start of the video
-      comment: comment
+      category, // Include the category in the critical moment
+      comment,
     };
 
     // Append the new critical moment to the 'criticalMoments' array for the video document
@@ -247,15 +293,42 @@ export const markCriticalMoment = async (
 
 
 export interface VideoData {
-  // Add properties expected from your video data here
   videoStorageId?: string;
-  startTime?: any;
-  videoURL?: any;
-  callStartTime?: any;
+  startTime?: any; // Consider using a more specific type here if possible, e.g., number for timestamp or Date
+  videoURL?: string; // Assuming this should be a string URL
+  callStartTime?: any; // Same note on specific typing as above
   criticalMoments: CriticalMoment[];
-  videoId?: any;
+  videoId?: string;
+  chat?: Array<any>; // Define a more specific type if your chat items have a known structure
 }
 
+export const fetchVideoData = async (videoIndex: string): Promise<VideoData | null> => {
+  const videoRef = doc(firestore, `videos/${videoIndex}`);
+  const videoDoc = await getDoc(videoRef);
+
+  if (videoDoc.exists()) {
+    const data = videoDoc.data();
+
+    // Providing a default value for criticalMoments if it does not exist.
+    const criticalMoments = data.criticalMoments || [];
+    const chat = data.chat || []; // Defaulting to an empty array if chat does not exist
+
+    // Constructing the VideoData object with all required properties, including chat.
+    const videoData: VideoData = {
+      videoId: videoDoc.id, // Assuming you want to include the document ID as videoId
+      criticalMoments,
+      videoURL: data.videoURL,
+      // Add chat to the constructed object
+      chat,
+      // Include other data properties as needed
+    };
+
+    return videoData;
+  } else {
+    console.log("No video data found for:", videoIndex);
+    return null;
+  }
+};
 
 export const fetchAllVideos = async (): Promise<VideoData[]> => {
   try {
@@ -274,35 +347,6 @@ export const fetchAllVideos = async (): Promise<VideoData[]> => {
     throw error; // Rethrow the error for handling elsewhere
   }
 };
-
-
-export const fetchVideoData = async (videoIndex: string): Promise<VideoData | null> => {
-  const videoRef = doc(firestore, `videos/${videoIndex}`);
-  const videoDoc = await getDoc(videoRef);
-
-  if (videoDoc.exists()) {
-    const data = videoDoc.data();
-
-    // Providing a default value for criticalMoments if it does not exist.
-    const criticalMoments = data.criticalMoments || [];
-
-    // Constructing the VideoData object with all required properties.
-    const videoData: VideoData = {
-      videoId: videoDoc.id,
-      criticalMoments: criticalMoments,
-      videoURL: data.videoURL,
-      // Include other properties from data or provide default values
-      // For example:
-      // title: data.title || "Untitled",
-      // description: data.description || "No description",
-    };
-
-    return videoData;
-  } else {
-    return null;
-  }
-};
-
 
 export const addChatMessage = async (userGroup: string, message: string, username: string) => {
   const meetingDocRef = doc(firestore, `currentMeetings/${userGroup}`);
@@ -465,5 +509,138 @@ export const updateVideoIdInMeeting= async (documentId: string, videoId: string)
   } catch (error) {
     console.error("Error updating videoId:", error);
     throw error; // Rethrow to let calling code handle it
+  }
+};
+
+export const createAlert = async ( meetingId: string, alertMessage: any ) => {
+  const meetingRef = doc(firestore, 'currentMeetings', meetingId);
+
+  try {
+    await updateDoc(meetingRef, {
+      alert: alertMessage,
+    });
+    console.log('Alert message updated successfully');
+  } catch (error) {
+    console.error('Error updating alert message:', error);
+    throw error; // Rethrow the error so it can be caught and logged in the component
+  }
+};
+
+export const onAlertMessageChange = (meetingId: string, callback: any) => {
+  const meetingRef = doc(firestore, 'currentMeetings', meetingId);
+
+  // Listen for changes in the document
+  const unsubscribe = onSnapshot(meetingRef, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      if (data.alert) {
+        callback(data.alert); // Execute callback with the new alert message
+      } else {
+        callback(''); // Clear the alert message if it's removed
+      }
+    }
+  }, (error) => {
+    console.error('Error listening for alert message changes:', error);
+    callback(''); // Consider clearing the message or handling the error
+  });
+
+  // Return the unsubscribe function to stop listening when the component unmounts
+  return unsubscribe;
+};
+
+export const showResearcherInRoom = async (roomId: any) => {
+  const roomRef = doc(firestore, "currentMeetings", roomId);
+  await updateDoc(roomRef, {
+      showResearcher: true
+  });
+};
+
+/**
+* Function to hide the researcher from the room.
+* @param {string} roomId The ID of the room to update.
+*/
+export const hideResearcherInRoom = async (roomId: any) => {
+  const roomRef = doc(firestore, "currentMeetings", roomId);
+  await updateDoc(roomRef, {
+      showResearcher: false
+  });
+};
+
+export const onShowResearcherChange = (userGroupId: string, onChange: any) => {
+  const userGroupRef = doc(firestore, "currentMeetings", userGroupId);
+
+  return onSnapshot(userGroupRef, (doc) => {
+      if (doc.exists()) {
+          const data = doc.data();
+          onChange(data.showResearcher);
+      } else {
+          onChange(false); // Assuming false as default if document or field doesn't exist
+      }
+  });
+};
+
+
+export const fetchCurrentAlertMessage = async (meetingId: string): Promise<string> => {
+  const meetingRef = doc(firestore, 'currentMeetings', meetingId);
+  try {
+    const docSnapshot = await getDoc(meetingRef);
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      // Return the alert message if it exists; otherwise, return an empty string
+      return data.alert || '';
+    } else {
+      console.log("No such document!");
+      return ''; // Return an empty string if the document does not exist
+    }
+  } catch (error) {
+    console.error("Error fetching alert message:", error);
+    return ''; // Return an empty string in case of error
+  }
+};
+
+export const getChatFromMeeting = async (meetingId: string) => {
+  try {
+    const meetingRef = doc(firestore, 'currentMeetings', meetingId);
+    const docSnapshot = await getDoc(meetingRef);
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      return data.chats || [];
+    } else {
+      console.log("Meeting document does not exist.");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching chat from meeting:", error);
+    return []; // Return an empty array in case of error
+  }
+};
+
+export const updateVideoWithChat = async (videoId: string, chatArray: any) => {
+  try {
+    const videoRef = doc(firestore, 'videos', videoId);
+    await updateDoc(videoRef, {
+      chat: chatArray
+    });
+    console.log('Chat array updated successfully in video document.');
+  } catch (error) {
+    console.error("Error updating video with chat:", error);
+    throw new Error('Error updating video with chat'); // Rethrow or handle as needed
+  }
+};
+
+export const removeChatFromMeeting = async (meetingId: string): Promise<void> => {
+  const meetingRef = doc(firestore, "currentMeetings", meetingId);
+
+  try {
+    // Here we're setting the chat field to an empty array to "remove" the chat.
+    // Adjust this based on how you want to handle the removal.
+    await updateDoc(meetingRef, {
+      chats: []
+    });
+    console.log(`Chat removed from meeting ${meetingId} successfully.`);
+  } catch (error) {
+    const firestoreError = error as FirestoreError;
+    console.error("Error removing chat from meeting:", firestoreError);
+    throw firestoreError; // Re-throw to allow caller to handle it
   }
 };
