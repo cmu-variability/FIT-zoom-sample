@@ -36,33 +36,65 @@ const ViewVideo: React.FunctionComponent = () => {
     <div>
       {videoData ? (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <button onClick={() => history.goBack()} style={{ cursor: 'pointer', marginRight: '20px', fontSize: '16px', padding: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', width: '100%' }}>
+            <button onClick={() => history.goBack()} style={{ cursor: 'pointer', fontSize: '16px', padding: '10px', margin: 13 }}>
               Go Back
             </button>
-            <h1 style={{ margin: 0 }}>Video Details</h1>
+            <h1 style={{ textAlign: 'center', margin: '0', flexGrow: 1 }}>Video Details</h1>
+            <div style={{ width: '86px' }}> {/* This div acts as a spacer to keep the title centered; adjust width based on the button's width to keep the title centered */}</div>
           </div>
-          <h2>Critical Moments</h2>
-          <ul>
-            {videoData.criticalMoments.map((moment: CriticalMoment, index: number) => (
-              <li key={index}>
-                <div>
-                  <p>Time: {formatTime(moment.time)}</p>
-                  <p>User: {moment.username}</p>
-                  <p>Comment: {moment.comment}</p>
-                  <p>Category: {moment.category}</p> {/* Assuming there's a category field */}
-                </div>
-              </li>
-            ))}
-          </ul>
-          <h2>Chat Messages</h2>
-          <ul>
-            {videoData.chat?.map((chatMessage, index) => (
-              <li key={index}>
-                <p>{chatMessage.user}: {chatMessage.text}</p>
-              </li>
-            ))}
-          </ul>
+          <div style={{ marginLeft: '20px' }}>
+            <h2 style={{ textAlign: 'left' }}>Critical Moments</h2>
+            <ul>
+              {videoData.criticalMoments.map((moment: CriticalMoment, index: number) => (
+                <li key={index} style={{ margin: '10px 0', display: 'flex', justifyContent: 'flex-start' }}>
+                  <div style={{
+                    textAlign: 'left',
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    border: '1px solid #ccc',
+                    width: '300px', // Set to 500px width
+                  }}>
+                    <p>Time: {formatTime(moment.time)}</p>
+                    <p>User: {moment.username}</p>
+                    <p>Comment: {moment.comment}</p>
+                    <p>Category: {moment.category}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <h2 style={{ textAlign: 'left' }}>Chat Messages</h2>
+            <div style={{ textAlign: 'left', maxWidth: '500px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Time</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Username</th>
+                    <th style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>Message</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {videoData.chat?.map((chatMessage, index) => {
+                    // Convert ISO string to Date objects
+                    const messageTime = new Date(chatMessage.timestamp).getTime();
+                    const startTime = new Date(videoData.callStartTime).getTime();
+
+                    // Calculate the time difference in milliseconds
+                    const timeDifference = messageTime - startTime;
+
+                    return (
+                      <tr key={index}>
+                        <td>{formatTime(timeDifference)}</td>
+                        <td>{chatMessage.user}</td>
+                        <td>{chatMessage.text}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </>
       ) : (
         <p>Loading video data...</p>

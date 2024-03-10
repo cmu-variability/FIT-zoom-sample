@@ -36,15 +36,17 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ meetingId }) => {
 
   return (
     <div style={{ position: 'fixed', top: '20%', left: '30%', width: '40%', height: 'auto', backgroundColor: 'white', padding: '20px', border: '1px solid black', zIndex: 1000 }}>
-      <h2>Edit Room Alert</h2>
-      <form onSubmit={(e) => e.preventDefault()}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0 }}>Edit Room Alert</h2>
+        <button onClick={handleClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '24px' }}>X</button>
+      </div>
+      <form onSubmit={(e) => e.preventDefault()} style={{ textAlign: 'left', marginTop: 10 }}>
         <div>
           <label>Alert Message: </label>
-          <input type="text" value={alertMessage} onChange={handleChange} />
+          <input type="text" value={alertMessage} onChange={handleChange} style={{ marginLeft: '5px' }} />
         </div>
-        <div>
-          <button type="button" onClick={handleClose}>Close</button>
-          <button type="button" onClick={handleSave}>Save</button>
+        <div style={{ marginTop: '10px' }}>
+          <button type="button" onClick={handleSave} style={{ marginRight: '10px' }}>Change Alert</button>
         </div>
       </form>
     </div>

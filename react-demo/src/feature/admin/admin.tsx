@@ -95,29 +95,30 @@ const handleDeleteRoom = async (roomId: string) => {
 
   return (
     <div>
-      <div className="nav">
-        <button onClick={() => history.goBack()}>Go Back</button>
-        <p>You are logged in as: {authContext?.loggedInUsername}</p>
-        <button onClick={() => authContext?.setIsResearcher(false)}>Logout</button>
+      <div className="nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingLeft: '10px', paddingRight: '10px' }}>
+        <button onClick={() => history.goBack()} style={{ marginLeft: '10px', padding: 5 }}>Go Back</button>
+        <p style={{ flexGrow: 1, textAlign: 'right', paddingRight: '20px' }}>You are logged in as: {authContext?.loggedInUsername}</p>
+        <button onClick={() => authContext?.setIsResearcher(false)} style={{ padding: 5, marginRight: 20 }}>Logout</button>
       </div>
 
-      <div>
-        <h1 style={{display: 'flex', alignSelf: 'flex-start', marginBottom: '10px'}}>Users</h1>
-        <button style={{display: 'flex', alignSelf: 'flex-start', marginBottom: '10px'}} onClick={handleCreateUser}>Create New User</button>
+      <div style={{ paddingLeft: '10px'}}>
+        <div style={{ textAlign: 'left', marginBottom: 20 }}>
+          <h1>Users</h1>
+          <button onClick={handleCreateUser} style={{ display: 'block' }}>Create New User</button>
+        </div>
         <table>
           <thead>
             <tr>
-              <th>Username</th>
-              <th>Actions</th>
+              <th style={{ paddingRight: '2px' }}>Username</th>
+              <th style={{ paddingRight: '2px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td>{user.id}</td>
+                <td style={{ paddingRight: '2px' }}>{user.id}</td>
                 <td>
-                  <button style={{marginRight: 50}} onClick={() => handleEditUser(user.id)}>Edit</button>
-                  {" "}
+                  <button style={{ marginRight: '15px' }} onClick={() => handleEditUser(user.id)}>Edit</button>
                   <button onClick={() => handleDeleteUser(user.id)}>Delete</button>
                 </td>
               </tr>
@@ -126,26 +127,37 @@ const handleDeleteRoom = async (roomId: string) => {
         </table>
       </div>
 
-      <div style={{display: 'flex', flexDirection: 'column', alignSelf: 'flex-start', alignItems: 'flex-start', width: 300}}>
-        <h1 style={{marginTop: 50}}>Rooms</h1>
-        <div style={{display: 'flex', flexDirection: 'row', height: 50}}>
+      <div style={{ paddingLeft: '10px', paddingTop: '20px' }}>
+        <h1 style={{textAlign: 'left', marginTop: '20px'}}>Rooms</h1>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '20px' }}>
           <input
             value={newRoomName}
             onChange={(e) => setNewRoomName(e.target.value)}
             placeholder="Enter new room name"
+            style={{ marginRight: '10px' }}
           />
           <button onClick={handleCreateRoom}>Create New Room</button>
         </div>
 
-        <ul>
-          {rooms.map((room) => (
-            <li key={room.id} style={{display: 'flex', alignItems: 'center'}}>
-              {room.id}
-              <button onClick={() => handleEditRoom(room.id)} style={{marginLeft: '10px'}}>Edit</button>
-              <button onClick={() => handleDeleteRoom(room.id)} style={{marginLeft: '10px'}}>Delete</button>
-            </li>
-          ))}
-        </ul>
+        <table>
+          <thead>
+            <tr>
+              <th>Room Names</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rooms.map((room) => (
+              <tr key={room.id}>
+                <td>{room.id}</td>
+                <td>
+                  <button onClick={() => handleEditRoom(room.id)} style={{ marginLeft: '10px', marginRight: '15px' }}>Edit</button>
+                  <button onClick={() => handleDeleteRoom(room.id)} style={{ marginLeft: '2px' }}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {modalStates.editUserInfoModal && editingUserId && <EditUserModal userId={editingUserId as string} />}

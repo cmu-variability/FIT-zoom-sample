@@ -65,28 +65,31 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ userId }) => {
 
   return (
     <div style={{ position: 'fixed', top: '20%', left: '30%', width: '40%', height: 'auto', backgroundColor: 'white', padding: '20px', border: '1px solid black', zIndex: 1000 }}>
-      <h2>Edit User: {userId}</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0 }}>Edit User: {userId}</h2>
+        <button onClick={handleClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '24px' }}>X</button>
+      </div>
       {userData ? (
-        <form onSubmit={(e) => e.preventDefault()}>
-          <div>
-            <label>Group: </label>
+        <form onSubmit={(e) => e.preventDefault()} style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div style={{ marginBottom: '10px' }}>
+            <label style={{ marginRight: '5px' }}>Group:</label>
             <input type="text" value={editData.group} onChange={(e) => handleChange(e, 'group')} />
           </div>
-          <div>
-            <label>Is Researcher: </label>
+          <div style={{ marginBottom: '10px' }}>
+            <label style={{ marginRight: '5px' }}>Is Researcher:</label>
             <input type="checkbox" checked={editData.isResearcher} onChange={(e) => handleChange(e, 'isResearcher')} />
           </div>
-          <div>
-            <label>Next Group: </label>
+          <div style={{ marginBottom: '10px' }}>
+            <label style={{ marginRight: '5px' }}>Next Group:</label>
             <input type="text" value={editData.nextGroup} onChange={(e) => handleChange(e, 'nextGroup')} />
           </div>
-          <div>
-            <label>Password: </label>
+          <div style={{ marginBottom: '10px' }}>
+            <label style={{ marginRight: '5px' }}>Password:</label>
             <input type="text" value={editData.password} onChange={(e) => handleChange(e, 'password')} />
           </div>
-          <div>
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <button type="button" onClick={handleSave} style={{ marginRight: '10px' }}>Save</button>
             <button type="button" onClick={handleClose}>Close</button>
-            <button type="button" onClick={handleSave}>Save</button>
           </div>
         </form>
       ) : (

@@ -297,7 +297,9 @@ export interface VideoData {
   startTime?: any; // Consider using a more specific type here if possible, e.g., number for timestamp or Date
   videoURL?: string; // Assuming this should be a string URL
   callStartTime?: any; // Same note on specific typing as above
+  callEndTime?: any; // Same note on specific typing as above
   criticalMoments: CriticalMoment[];
+  userId?: string;
   videoId?: string;
   chat?: Array<any>; // Define a more specific type if your chat items have a known structure
 }
@@ -318,6 +320,7 @@ export const fetchVideoData = async (videoIndex: string): Promise<VideoData | nu
       videoId: videoDoc.id, // Assuming you want to include the document ID as videoId
       criticalMoments,
       videoURL: data.videoURL,
+      callStartTime: data.callStartTime,
       // Add chat to the constructed object
       chat,
       // Include other data properties as needed

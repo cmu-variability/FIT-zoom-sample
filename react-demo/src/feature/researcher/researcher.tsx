@@ -169,36 +169,44 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
               Logout
             </button>
           </div>
-          <div className="home">
-            <h1>Available Rooms:</h1>
-            <div className="feature-entry">
-            {currentMeetings.map((meet: { id: string, users: string[] }) => (
-              <Card
-                cover={<IconFont style={{ fontSize: '72px' }} type="icon-meeting" />}
-                hoverable
-                style={{ width: 320 }}
-                className="entry-item"
-                key={meet.id} // Use the meeting's id property as the key
-                onClick={() => onCardClick(meet.id)}
-              >
-                <Meta 
-                  title={`Room ID: ${meet.id}`} // Display the Room ID
-                  description={`Users: ${meet.users.join(', ')}`} // Join the users array into a single string
-                />
-              </Card>
-            ))}
+          <div className="home" style={{ textAlign: 'left', marginLeft: '20px' }}>
+            <h1 style={{ marginBottom: '10px' }}>Available Rooms:</h1>
+            <div className="feature-entry" style={{ display: 'flex', flexDirection: 'row', gap: '10px', justifyContent: 'left' }}>
+              {currentMeetings.map((meet: { id: string, users: string[] }) => (
+                <Card
+                  cover={<IconFont style={{ fontSize: '72px' }} type="icon-meeting" />}
+                  hoverable
+                  style={{ width: 320, alignSelf: 'flex-start' }} // Aligns card to the left
+                  className="entry-item"
+                  key={meet.id}
+                  onClick={() => onCardClick(meet.id)}
+                >
+                  <Meta 
+                    title={`Room ID: ${meet.id}`}
+                    description={`Users: ${meet.users.join(', ')}`}
+                    style={{ textAlign: 'left' }} // Ensures text inside Meta is aligned left
+                  />
+                </Card>
+              ))}
             </div>
           </div>
 
           {loggedInUsername && (
-            <div className="video-details">
-              <h2>Recorded Videos</h2>
-              <div className="video-grid"> {/* Apply the grid container class here */}
+            <div className="video-details" style={{ textAlign: 'left' }}>
+              <h1 style={{ marginBottom: '0px', marginLeft: '20px' }}>Recorded Videos</h1>
+              <div className="video-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(275px, 1fr))', gap: '10px' }}> 
+                {/* Adjust gridTemplateColumns as needed to fit your design */}
                 {videoDetails.map((video, index) => (
-                  <div className="video-item" key={index}> {/* Apply the item class here */}
-                    <a href={video.videoURL} target="_blank">Firebase Video Link</a>
-                    <span>Start Time: {video.callStartTime}</span>
-                    <a href={('/r/' + video.videoStorageId)}>Watch Video</a>
+                  <div className="video-item" key={index} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '0px' }}> {/* Additional styling for video items */}
+                    <a href={video.videoURL} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginBottom: '0px' }}>Video Link</a>
+                    <span style={{ display: 'block', marginBottom: '5px' }}>researcher: {video.userId}</span>
+                    <span style={{ display: 'block', marginBottom: '0px' }}>
+                      Start Time: {new Date(video.callStartTime).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span style={{ display: 'block', marginBottom: '0px' }}>
+                      End Time: {new Date(video.callEndTime).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <a href={('/r/' + video.videoStorageId)} style={{ display: 'block' }}>Critical Moments & Chat</a>
                   </div>
                 ))}
               </div>

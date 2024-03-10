@@ -745,7 +745,7 @@ const VideoFooter = (props: VideoFooterProps) => {
         />
       )}
 
-      {recordingButtons.map((button: RecordButtonProps) => {
+      {/* {recordingButtons.map((button: RecordButtonProps) => {
         return (
           <RecordingButton
             key={button.text}
@@ -755,7 +755,7 @@ const VideoFooter = (props: VideoFooterProps) => {
             {...button}
           />
         );
-      })}
+      })} */}
 
       {/* added this */}
       {/* <RecordingButton
@@ -767,10 +767,10 @@ const VideoFooter = (props: VideoFooterProps) => {
 
       {isResearcher && (
         <>
-          <button onClick={isRecording ? stopRecording : startRecording}>
+          <button style={{marginRight: 7}} onClick={isRecording ? stopRecording : startRecording}>
             {isRecording ? 'Stop Recording' : 'Start Recording'}
           </button>
-          <button onClick={handleAlertButtonClick}>
+          <button style={{marginRight: 7}} onClick={handleAlertButtonClick}>
             Create Alert
           </button>
           {/* <button onClick={isShowingResearcher ? stopShowingResearcher : startShowingResearcher}>
@@ -780,7 +780,7 @@ const VideoFooter = (props: VideoFooterProps) => {
         
       )}
 
-      <button onClick={handleMarkCriticalMoment}>
+      <button style={{marginRight: 7}} onClick={handleMarkCriticalMoment}>
         Mark Critical Moment
       </button>
 

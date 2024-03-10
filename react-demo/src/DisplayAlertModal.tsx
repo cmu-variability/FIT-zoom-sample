@@ -59,15 +59,13 @@ const DisplayAlertModal: React.FC = () => {
   return (
     <>
       {modalStates.displayAlertModal && (
-        <div style={{ position: 'fixed', top: '20%', right: '20%', backgroundColor: 'white', padding: '20px', border: '1px solid black', zIndex: 1000 }}>
-          <div>
-            <button onClick={handleClose}>Close</button>
+        <div style={{ position: 'fixed', top: '20%', right: '10%', backgroundColor: 'white', padding: '20px', border: '1px solid #ccc', zIndex: 1050, width: '250px', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <h3 style={{ margin: 0 }}>Alert Message:</h3>
+            <button onClick={handleClose} style={{ marginLeft: '10px' }}>X</button>
           </div>
-          <div style={{ margin: '10px 0' }}>
-            Alert Message:
-            <div style={{ marginTop: '10px' }}>
-              {alertMessage}
-            </div>
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ wordWrap: 'break-word' }}>{alertMessage}</p>
           </div>
         </div>
       )}
