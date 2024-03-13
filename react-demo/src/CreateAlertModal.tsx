@@ -28,8 +28,8 @@ const CreateAlertModal: React.FC = () => {
       {modalStates.createAlertModal && (
         <div style={{
           position: 'fixed',
-          top: '10%',
-          left: '58%',
+          top: '3%',
+          right: '30%',
           backgroundColor: 'white',
           padding: '20px',
           border: '1px solid black',

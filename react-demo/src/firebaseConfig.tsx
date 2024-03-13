@@ -515,6 +515,7 @@ export const updateVideoIdInMeeting= async (documentId: string, videoId: string)
   }
 };
 
+
 export const createAlert = async ( meetingId: string, alertMessage: any ) => {
   const meetingRef = doc(firestore, 'currentMeetings', meetingId);
 
@@ -528,6 +529,40 @@ export const createAlert = async ( meetingId: string, alertMessage: any ) => {
     throw error; // Rethrow the error so it can be caught and logged in the component
   }
 };
+
+export const fetchCanShowResearcher = async (meetingId: string): Promise<boolean> => {
+  const meetingRef = doc(firestore, 'currentMeetings', meetingId);
+  try {
+    const docSnapshot = await getDoc(meetingRef);
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
+      return data.showResearcher ?? false;
+    } else {
+      console.log("No such document!");
+      return false; // Default to false if the document does not exist
+    }
+  } catch (error) {
+    console.error("Error fetching canShowResearcher setting:", error);
+    return false; // Return false in case of error
+  }
+};
+
+export const updateRoomInfo = async (meetingId: string, alertMessage: string, canShowResearcher: boolean) => {
+  const meetingRef = doc(firestore, 'currentMeetings', meetingId);
+
+  try {
+    await updateDoc(meetingRef, {
+      alert: alertMessage,
+      showResearcher: canShowResearcher,
+    });
+    console.log('Room info updated successfully');
+  } catch (error) {
+    console.error('Error updating room info:', error);
+    throw error; // Rethrow the error so it can be handled further up
+  }
+};
+
+
 
 export const onAlertMessageChange = (meetingId: string, callback: any) => {
   const meetingRef = doc(firestore, 'currentMeetings', meetingId);
@@ -549,13 +584,6 @@ export const onAlertMessageChange = (meetingId: string, callback: any) => {
 
   // Return the unsubscribe function to stop listening when the component unmounts
   return unsubscribe;
-};
-
-export const showResearcherInRoom = async (roomId: any) => {
-  const roomRef = doc(firestore, "currentMeetings", roomId);
-  await updateDoc(roomRef, {
-      showResearcher: true
-  });
 };
 
 /**
@@ -647,3 +675,4 @@ export const removeChatFromMeeting = async (meetingId: string): Promise<void> =>
     throw firestoreError; // Re-throw to allow caller to handle it
   }
 };
+

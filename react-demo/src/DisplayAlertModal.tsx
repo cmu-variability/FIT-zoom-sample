@@ -59,7 +59,7 @@ const DisplayAlertModal: React.FC = () => {
   return (
     <>
       {modalStates.displayAlertModal && (
-        <div style={{ position: 'fixed', top: '20%', right: '10%', backgroundColor: 'white', padding: '20px', border: '1px solid #ccc', zIndex: 1050, width: '250px', boxSizing: 'border-box' }}>
+        <div style={{ position: 'fixed', top: '5%', right: '40%', backgroundColor: 'white', padding: '20px', border: '1px solid #ccc', zIndex: 1050, width: '250px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <h3 style={{ margin: 0 }}>Alert Message:</h3>
             <button onClick={handleClose} style={{ marginLeft: '10px' }}>X</button>

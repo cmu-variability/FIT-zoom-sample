@@ -3,6 +3,8 @@ import classNames from 'classnames';
 import { message } from 'antd';
 import ZoomContext from '../../../context/zoom-context';
 import CameraButton from './camera';
+import StartRecordingButton from './start-recording';
+import StopRecordingButton from './stop-recording';
 import MicrophoneButton from './microphone';
 import { ScreenShareButton } from './screen-share';
 import AudioVideoStatisticModal from './audio-video-statistic';
@@ -34,7 +36,7 @@ import { IconFont } from '../../../component/icon-font';
 import { VideoMaskModel } from './video-mask-modal';
 
 import { RouteComponentProps } from 'react-router-dom';
-import { updateUserGroup, haveUserLeaveRoom, fetchNextUserGroup, uploadVideo, createVideoReference, markCriticalMoment, onVideoIdSnapshot, updateVideoIdInMeeting, showResearcherInRoom, hideResearcherInRoom, getChatFromMeeting, updateVideoWithChat, removeChatFromMeeting } from '../../../firebaseConfig';
+import { updateUserGroup, haveUserLeaveRoom, fetchNextUserGroup, uploadVideo, createVideoReference, markCriticalMoment, onVideoIdSnapshot, updateVideoIdInMeeting, hideResearcherInRoom, getChatFromMeeting, updateVideoWithChat, removeChatFromMeeting } from '../../../firebaseConfig';
 import { useAuth } from '../../../authContext'; // Adjust the path as per your directory structure
 import moment from 'moment-timezone';
 import { useModal } from '../../../ModalContext';
@@ -42,6 +44,10 @@ import ChatModal from '../../../ChatModal';
 import CreateAlertModal from '../../../CreateAlertModal';
 import DisplayAlertModal from '../../../DisplayAlertModal';
 import CreateCriticalMomentModal from '../../../CreateCriticalMomentModal';
+
+import MarkCriticalMomentButton from './mark-critical-moment';
+import OpenChatButton from './open-chat';
+
 
 interface VideoFooterProps extends RouteComponentProps {
   className?: string;
@@ -767,24 +773,18 @@ const VideoFooter = (props: VideoFooterProps) => {
 
       {isResearcher && (
         <>
-          <button style={{marginRight: 7}} onClick={isRecording ? stopRecording : startRecording}>
-            {isRecording ? 'Stop Recording' : 'Start Recording'}
-          </button>
-          <button style={{marginRight: 7}} onClick={handleAlertButtonClick}>
-            Create Alert
-          </button>
-          {/* <button onClick={isShowingResearcher ? stopShowingResearcher : startShowingResearcher}>
-            {isShowingResearcher ? 'Stop Showing Researcher' : 'Show Researchers'}
-          </button> */}
+          {isRecording ? (
+            <StopRecordingButton onClick={stopRecording} />
+          ) : (
+            <StartRecordingButton onClick={startRecording} />
+          )}
         </>
         
       )}
 
-      <button style={{marginRight: 7}} onClick={handleMarkCriticalMoment}>
-        Mark Critical Moment
-      </button>
+      <MarkCriticalMomentButton onClick={handleMarkCriticalMoment} />
+      <OpenChatButton onClick={handleChatButtonClick} />
 
-      <button style={{marginRight: 10}} onClick={handleChatButtonClick}>Open Chat</button>
       <ChatModal />
       <CreateAlertModal />
       <DisplayAlertModal />

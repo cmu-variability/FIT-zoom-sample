@@ -36,7 +36,7 @@ const ChatModal: React.FC = () => {
   return (
     <>
       {modalStates.chatModal && (
-        <div style={{ position: 'fixed', top: '20%', right: '10%', backgroundColor: 'white', padding: '20px', border: '1px solid #ccc', zIndex: 1050, width: '300px', boxSizing: 'border-box' }}>
+        <div style={{ position: 'fixed', top: '30%', right: '3%', backgroundColor: 'white', padding: '20px', border: '1px solid #ccc', zIndex: 1050, width: '300px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h3 style={{ margin: 0 }}>Chat</h3>
             <button onClick={() => setModalState('chatModal', false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>X</button>

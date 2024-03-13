@@ -154,9 +154,9 @@ function App(props: AppProps) {
   const mediaContext = useMemo(() => ({ ...mediaState, mediaStream }), [mediaState, mediaStream]);
   const galleryViewWithoutSAB = Number(enforceGalleryView) === 1 && !window.crossOriginIsolated;
   
-  const createVideoToken = async (group: string, isResearcher: boolean) => {
+  const createVideoToken = async (group: string, showCamera: boolean) => {
     try {
-        console.log("inside createVideoToken", group);
+        console.log("inside createVideoToken", group, showCamera);
         props.meetingArgs.signature = generateVideoToken(
             props.meetingArgs.sdkKey,
             props.meetingArgs.sdkSecret,
@@ -183,11 +183,17 @@ function App(props: AppProps) {
                 });
 
                 setLoadingText('Joining the session...');
-                if (isResearcher) {
+
+                if (!showCamera) {
+                  console.log("this is not where it should be: ");
                   await zmClient.join(group, props.meetingArgs.signature, "researcher", password);
                 } else {
+                  console.log("this is where it should be");
                   await zmClient.join(group, props.meetingArgs.signature, name, password);
                 }
+                // await zmClient.join(group, props.meetingArgs.signature, name, password);
+
+
                 const stream = zmClient.getMediaStream();
                 setMediaStream(stream);
                 setIsSupportGalleryView(stream.isSupportMultipleVideos());

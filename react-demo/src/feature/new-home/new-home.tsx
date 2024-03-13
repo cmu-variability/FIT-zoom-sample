@@ -13,7 +13,7 @@ const { Meta } = Card;
 interface HomeProps extends RouteComponentProps {
   status: string;
   onLeaveOrJoinSession: () => void;
-  createVideoToken: (topic: string, isResearcher: boolean) => any;
+  createVideoToken: (topic: string, showCamera: boolean) => any;
 
 }
 const Home: React.FunctionComponent<HomeProps> = (props) => {
@@ -83,12 +83,10 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     }
   };
 
-  const onWebcamClick = (type: string) => {
-      createVideoToken(userGroup, false).then(() => {
-        history.push(`/video`);
-        console.log(username, userGroup);
-        haveUserJoinRoom(loggedInUsername, userGroup);
-      })
+  const onWebcamClick = async (type: string) => {
+      await createVideoToken(userGroup, true);
+      history.push(`/video`);
+      haveUserJoinRoom(loggedInUsername, userGroup); // Use `id` directly as `userGroup` state might not be updated yet
   };
 
   const webcamRef = React.useRef(null);

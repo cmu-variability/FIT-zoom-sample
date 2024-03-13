@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useModal } from './ModalContext';
-import { fetchCurrentAlertMessage, createAlert } from './firebaseConfig'; // Adjust the import path as needed
+import { fetchCurrentAlertMessage, fetchCanShowResearcher, updateRoomInfo } from './firebaseConfig'; // Ensure updateShowResearcherSetting is implemented
 
 interface EditRoomModalProps {
   meetingId: string;
@@ -9,11 +9,18 @@ interface EditRoomModalProps {
 const EditRoomModal: React.FC<EditRoomModalProps> = ({ meetingId }) => {
   const { modalStates, setModalState } = useModal();
   const [alertMessage, setAlertMessage] = useState('');
+  const [showResearcher, setShowResearcher] = useState('');
 
   useEffect(() => {
     const fetchAlertMessage = async () => {
       const message = await fetchCurrentAlertMessage(meetingId);
+      const canShowResearcherInRoom = await fetchCanShowResearcher(meetingId);
       setAlertMessage(message);
+      if (canShowResearcherInRoom) {
+        setShowResearcher("show");
+      } else {
+        setShowResearcher("hide");
+      }
     };
 
     fetchAlertMessage();
@@ -24,8 +31,12 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ meetingId }) => {
   };
 
   const handleSave = async () => {
-    await createAlert(meetingId, alertMessage);
+    await updateRoomInfo(meetingId, alertMessage, showResearcher === 'show');
     setModalState('editRoomModal', false);
+  };
+
+  const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setShowResearcher(e.target.value);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,8 +56,18 @@ const EditRoomModal: React.FC<EditRoomModalProps> = ({ meetingId }) => {
           <label>Alert Message: </label>
           <input type="text" value={alertMessage} onChange={handleChange} style={{ marginLeft: '5px' }} />
         </div>
+        <div>
+          <label>
+            <input type="radio" value="show" checked={showResearcher === 'show'} onChange={handleRadioChange} />
+            Show Researcher in Room
+          </label>
+          <label>
+            <input type="radio" value="hide" checked={showResearcher === 'hide'} onChange={handleRadioChange} />
+            Don't Show Researcher in Room
+          </label>
+        </div>
         <div style={{ marginTop: '10px' }}>
-          <button type="button" onClick={handleSave} style={{ marginRight: '10px' }}>Change Alert</button>
+          <button type="button" onClick={handleSave} style={{ marginRight: '10px' }}>Save Changes</button>
         </div>
       </form>
     </div>

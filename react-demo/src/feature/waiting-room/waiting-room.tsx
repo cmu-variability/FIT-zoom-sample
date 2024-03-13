@@ -71,7 +71,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
   };
 
   const onWebcamClick = (type: string) => {
-      createVideoToken(userGroup, false).then(() => {
+      createVideoToken(userGroup, true).then(() => {
         history.push(`/video`);
         console.log(username, userGroup);
         haveUserJoinRoom(loggedInUsername, userGroup);

@@ -28,7 +28,7 @@ const CreateCriticalMomentModal: React.FC<{ currentVideoId: string }> = ({ curre
   return (
     <>
       {modalStates.createCriticalMomentModal && (
-        <div style={{ position: 'fixed', top: '10%', right: '10%', backgroundColor: 'white', padding: '20px', border: '1px solid black', zIndex: 1050, width: '400px' }}>
+        <div style={{ position: 'fixed', top: '5%', right: '30%', backgroundColor: 'white', padding: '20px', border: '1px solid black', zIndex: 1050, width: '400px' }}>
           <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
             <button onClick={() => setModalState('createCriticalMomentModal', false)}>X</button>
           </div>

@@ -6,14 +6,14 @@ import { IconFont } from '../../component/icon-font';
 import './researcher.scss';
 import { checkLoginCredentials } from '../../firebaseConfig'; // adjust the import path as needed
 import { useAuth } from '../../authContext'; // Adjust the path as per your directory structure
-import { haveUserJoinRoom, fetchAllVideos, VideoData, fetchCurrentMeetings } from '../../firebaseConfig';
+import { haveUserJoinRoom, fetchAllVideos, VideoData, fetchCurrentMeetings, fetchCanShowResearcher } from '../../firebaseConfig';
 
 
 const { Meta } = Card;
 interface HomeProps extends RouteComponentProps {
   status: string;
   onLeaveOrJoinSession: () => void;
-  createVideoToken: (topic: string, isResearcher: boolean) => any;
+  createVideoToken: (topic: string, showCamera: boolean) => any;
 }
 
 const Home: React.FunctionComponent<HomeProps> = (props) => {
@@ -84,9 +84,20 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
 
   const onCardClick = async (id: string) => {
     setUserGroup(id);
-    await createVideoToken(id, true);
-    history.push(`/video`);
-    haveUserJoinRoom(username, id); // Use `id` directly as `userGroup` state might not be updated yet
+  
+    try {
+      const canShowResearcher = await fetchCanShowResearcher(id);
+      console.log("canShowResearcher: ", canShowResearcher);
+      // Assuming `createVideoToken` returns a Promise; adjust as necessary
+      await createVideoToken(id, canShowResearcher);
+  
+      // Ensure that `haveUserJoinRoom` and the navigation to `/video` happens after `createVideoToken`
+      haveUserJoinRoom(username, id); // Use `username` directly, assuming it's defined in scope
+      history.push(`/video`);
+    } catch (error) {
+      console.error('Error in onCardClick:', error);
+      // Handle any errors, such as showing an error message to the user
+    }
   };
 
   useEffect(() => {

@@ -19,6 +19,8 @@ import ShareView from './components/share-view';
 import RemoteCameraControlPanel from './components/remote-camera-control';
 import { useHistory } from 'react-router-dom';
 
+import survival from './survival.png';
+
 import './video.scss';
 
 const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => {
@@ -60,6 +62,7 @@ const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => 
         className={classnames('video-container', {
           'video-container-in-sharing': isRecieveSharing
         })}
+        style={{width: '71vw'}}
       >
         <canvas className="video-canvas" id="video-canvas" width="800" height="600" ref={videoRef} />
         <AvatarActionContext.Provider value={avatarActionState}>
@@ -87,7 +90,22 @@ const VideoContainer: React.FunctionComponent<RouteComponentProps> = (props) => 
               );
             })}
           </ul>
+          <li>outside the videos</li>
           <RemoteCameraControlPanel />
+          <img 
+            src={survival} 
+            alt="survival image" 
+            style={{ 
+              position: 'fixed', 
+              right: '20px', 
+              top: '50%', 
+              transform: 'translateY(-50%)', 
+              zIndex: 1000, 
+              width: '25vw', 
+              height: '60vh',
+              objectFit: 'cover' // This will cover the area and may crop the image
+            }} 
+          />
         </AvatarActionContext.Provider>
       </div>
       <VideoFooter {...props} className="video-operations" sharing selfShareCanvas={shareViewRef.current?.selfShareRef} />
