@@ -19,7 +19,7 @@ import Video from './feature/video/video';
 import VideoSingle from './feature/video/video-single';
 import VideoNonSAB from './feature/video/video-non-sab';
 import Preview from './feature/preview/preview';
-import WaitingRoom from './feature/waiting-room/waiting-room';
+import WaitingRoom from './feature/next-room/next-room';
 import Researcher from './feature/researcher/researcher';
 import Admin from './feature/admin/admin';
 import ViewVideo from './feature/view-video-and-moments/view-video-and-moments';

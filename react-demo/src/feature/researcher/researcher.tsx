@@ -66,7 +66,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     console.log('Login successful. Group:', result);
 
     if (result.valid) {
-      setUserGroup(result.group)
+      setUserGroup(result.room1)
       setLoggedInUsername(username);
       setIsResearcher(result.isResearcher);
       setResearcher('r');
@@ -181,6 +181,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
             </button>
           </div>
           <div className="home" style={{ textAlign: 'left', marginLeft: '20px' }}>
+            <h2 style={{ marginBottom: '10px' }}>Please refresh the page before joining a room</h2>
             <h1 style={{ marginBottom: '10px' }}>Available Rooms:</h1>
             <div className="feature-entry" style={{ display: 'flex', flexDirection: 'row', gap: '10px', justifyContent: 'left' }}>
               {currentMeetings.map((meet: { id: string, users: string[] }) => (

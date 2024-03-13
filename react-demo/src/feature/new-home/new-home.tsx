@@ -33,6 +33,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     // Check if user is already logged in
     const storedUsername = localStorage.getItem('loggedInUsername');
     const storedUserGroup = localStorage.getItem('loggedInUserGroup');
+    console.log("storedUserGroup: ", storedUserGroup);
     const storedIsResearcher = localStorage.getItem('loggedInIsResearcher');
     const storedResearcher = localStorage.getItem('loggedInResearcher')
 
@@ -69,7 +70,7 @@ const Home: React.FunctionComponent<HomeProps> = (props) => {
     const result = await checkLoginCredentials(username, password);
     console.log("result: ", result, result.isResearcher);
     if (result.valid) {
-      setUserGroup(result.group)
+      setUserGroup(result.room1)
       setLoggedInUsername(username);
       setIsResearcher(result.isResearcher)
       setResearcher(result.researcher);

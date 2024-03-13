@@ -18,7 +18,7 @@ export const checkLoginCredentials = async (username: string, password: string) 
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.password === password) {
-          return { valid: true, group: userData.group, isResearcher: userData.isResearcher, researcher: userData.researcher };
+          return { valid: true, room1: userData.room1, isResearcher: userData.isResearcher, researcher: userData.researcher };
         }
       }
       return { valid: false };
@@ -35,56 +35,49 @@ export const checkLoginCredentials = async (username: string, password: string) 
   
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        if (userData.nextGroup) {
+        // Perform the update if room2 exists
+        if (userData.room2) {
           await updateDoc(userDocRef, {
-            group: userData.nextGroup
+            room1: userData.room2,
+            room2: userData.room3 || '', // Update room2 to room3 or clear it if room3 does not exist
+            // Optionally clear room3 if needed
+            // room3: ''
           });
           return { success: true, message: "User group updated successfully." };
         } else {
-          return { success: false, message: "Next group field is empty." };
+          return { success: false, message: "Next group field (room2) is empty." };
         }
       } else {
         return { success: false, message: "User not found." };
       }
     } catch (error) {
-      // Check if error is an instance of Error
-      if (error instanceof Error) {
-        console.error('Error updating user group:', error);
-        return { success: false, message: error.message };
-      } else {
-        // Handle the case where the error is not an Error instance
-        console.error('An unknown error occurred:', error);
-        return { success: false, message: 'An unknown error occurred' };
-      }
+      console.error('Error updating user group:', error);
+      return { success: false, message: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
-  };
+  };  
 
   export const fetchNextUserGroup = async (username: string | null) => {
     try {
-      // Reference to the specific user document
       const userDocRef = doc(firestore, `Users/${username}`);
-      
-      // Fetch the document
       const userDoc = await getDoc(userDocRef);
   
       if (userDoc.exists()) {
-        // Get the data from the document
         const userData = userDoc.data();
         
-        // Check if nextGroup field exists
-        if ('nextGroup' in userData) {
-          return { success: true, nextUserGroup: userData.nextGroup };
+        if ('room2' in userData) {
+          return { success: true, nextUserGroup: userData.room2 };
         } else {
-          throw new Error('nextGroup field does not exist for this user');
+          throw new Error('Room2 field does not exist for this user');
         }
       } else {
         throw new Error(`User document for ${username} does not exist`);
       }
     } catch (error) {
-      console.error("Error fetching next user group:", error);
+      console.error("Error fetching next user group (room2):", error);
       return { success: false, message: error instanceof Error ? error.message : "An unknown error occurred" };
     }
   };
+  
 
   export interface FetchCurrentMeetingsResponse {
     success: boolean;
@@ -384,35 +377,33 @@ export const onChatMessagesSnapshot = (userGroup: string, callback: Function) =>
   });
 };
 
-export interface User {
+export interface UserData {
   id: string;
-  group: string;
-  nextGroup: string;
-  password: string;
   isResearcher: boolean;
+  password: string;
+  room1: string;
+  room2: string;
+  room3: string;
 }
 
-export const fetchUsers = async (): Promise<User[]> => {
+export const fetchUsers = async (): Promise<UserData[]> => {
   const usersCol = collection(firestore, 'Users');
   const userSnapshot = await getDocs(usersCol);
   return userSnapshot.docs.map(doc => {
     const userData = doc.data();
     return {
       id: doc.id,
-      group: userData.group,
-      nextGroup: userData.nextGroup,
+      room1: userData.room1,
+      room2: userData.room2,
+      room3: userData.room3,
       password: userData.password,
       isResearcher: userData.isResearcher
-    } as User;
+    } as UserData;
   });
 };
 
-export interface UserData {
-  group: string;
-  isResearcher: boolean;
-  nextGroup: string;
-  password: string;
-}
+
+
 
 export const fetchUserData = async (userId: string): Promise<UserData | undefined> => {
   const docRef = doc(firestore, 'Users', userId);
@@ -426,38 +417,33 @@ export const fetchUserData = async (userId: string): Promise<UserData | undefine
   }
 };
 
-export interface UserData2 {
-  id: string; // Assuming the document name will be stored as 'id'
-  group: string;
-  isResearcher: boolean;
-  nextGroup: string;
-  password: string;
-}
-
 export const updateUser = async (userId: string, editData: UserData): Promise<void> => {
   try {
-    const userRef = doc(firestore, 'Users', userId); // Correctly obtain a document reference
+    const userRef = doc(firestore, 'Users', userId);
     await updateDoc(userRef, {
-      group: editData.group,
       isResearcher: editData.isResearcher,
-      nextGroup: editData.nextGroup,
       password: editData.password,
+      room1: editData.room1,
+      room2: editData.room2,
+      room3: editData.room3,
     });
     console.log('User updated successfully');
   } catch (error) {
     console.error('Error updating user:', error);
-    throw error; // Allows error handling in the component
+    throw error;
   }
 };
 
-export const createUser = async (userData: UserData2): Promise<void> => {
+export const createUser = async (userData: UserData): Promise<void> => {
   try {
-    // Ensure 'id' is used as the document ID
     await setDoc(doc(firestore, 'Users', userData.id), {
-      group: userData.group,
+      // Removed group and nextGroup
       isResearcher: userData.isResearcher,
-      nextGroup: userData.nextGroup,
       password: userData.password,
+      // Added room fields
+      room1: userData.room1,
+      room2: userData.room2,
+      room3: userData.room3,
     });
     console.log('User created successfully');
   } catch (error) {

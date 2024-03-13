@@ -39,7 +39,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, initialSta
   };
 
   const setIsResearcher = (isResearcher: boolean) => {
-    console.log('in setIsResearcher: ', String(isResearcher));
     localStorage.setItem('loggedInIsResearcher', String(isResearcher));
     setIsResearcherState(isResearcher);
   };

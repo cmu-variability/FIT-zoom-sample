@@ -1,6 +1,6 @@
 // AdminScreen.js
 import React, { useState, useEffect } from 'react';
-import { User, fetchUsers, deleteUser, fetchCurrentMeetings, deleteCurrentMeeting, createNewMeetingRoom, Meeting } from '../../firebaseConfig';
+import { UserData, fetchUsers, deleteUser, fetchCurrentMeetings, deleteCurrentMeeting, createNewMeetingRoom, Meeting } from '../../firebaseConfig';
 import { useAuth } from '../../authContext';
 import { useHistory } from 'react-router-dom';
 import { useModal } from '../../ModalContext'; // Adjust the import path as needed
@@ -10,7 +10,7 @@ import EditRoomModal from '../../EditRoomModal';
 
 
 const AdminScreen = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [editingUserId, setEditingUserId] = useState<string | null>(null); 
   const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<{ id: string; name?: string; users?: Array<any>; videoId?: string; chats?: Array<any> }[]>([]);
