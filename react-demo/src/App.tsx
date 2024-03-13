@@ -113,7 +113,7 @@ function App(props: AppProps) {
   const authContext = useAuth();
   if (!authContext) {
     // Handle the case where auth context is null. For example:
-    return null; // or some other appropriate handling
+    return null; // or some other appropriate handling test
   }
   const { loggedInUsername, setLoggedInUsername, userGroup, setUserGroup, isResearcher, setIsResearcher } = authContext;
 
